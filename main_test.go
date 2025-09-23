@@ -5,7 +5,7 @@ import (
 )
 
 func TestGenerateColorCounts(t *testing.T) {
-	counts := generateColorCounts(palette, gridSize)
+	counts := generateColorCounts(Palette, GridSize)
 
 	sum := 0
 	for _, count := range counts {

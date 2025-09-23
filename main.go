@@ -6,7 +6,6 @@ import (
 	"image/color"
 	"log"
 	"math/rand"
-	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
@@ -18,93 +17,93 @@ import (
 )
 
 const (
-	screenWidth  = 800
-	screenHeight = 640
-	gridSize     = 10
+	ScreenWidth  = 800
+	ScreenHeight = 640
+	GridSize     = 10
 	squareSize   = 48
 	gap          = 8
 )
 
 var (
 	// A curated color palette
-	red        = color.RGBA{R: 237, G: 63, B: 39, A: 255}
-	oldRed     = color.RGBA{R: 171, G: 68, B: 89, A: 255}
-	yellow     = color.RGBA{R: 255, G: 204, B: 0, A: 255}
-	green      = color.RGBA{R: 52, G: 199, B: 89, A: 255}
-	blue       = color.RGBA{R: 0, G: 122, B: 255, A: 255}
-	black      = color.RGBA{R: 27, G: 24, B: 51, A: 255}
-	lightBrown = color.RGBA{R: 210, G: 180, B: 140, A: 255}
-	white      = color.RGBA{R: 255, G: 255, B: 255, A: 255}
-	crimsonRed = color.RGBA{R: 220, G: 20, B: 60, A: 255}
-	plume      = color.RGBA{R: 107, G: 63, B: 105, A: 255}
-	grey       = color.RGBA{R: 55, G: 53, B: 62, A: 255}
-	lightGrey  = color.RGBA{R: 211, G: 218, B: 217, A: 255}
-	peach      = color.RGBA{R: 242, G: 159, B: 88, A: 255}
-	orange     = color.RGBA{R: 255, G: 149, B: 0, A: 255}
-	purple     = color.RGBA{R: 175, G: 82, B: 222, A: 255}
-	cyan       = color.RGBA{R: 50, G: 173, B: 230, A: 255}
-	magenta    = color.RGBA{R: 255, G: 45, B: 85, A: 255}
-	lime       = color.RGBA{R: 204, G: 255, B: 0, A: 255}
-	teal       = color.RGBA{R: 90, G: 200, B: 250, A: 255}
-	brown      = color.RGBA{R: 162, G: 132, B: 94, A: 255}
-	pink       = color.RGBA{R: 255, G: 105, B: 180, A: 255}
-	gold       = color.RGBA{R: 255, G: 215, B: 0, A: 255}
-	silver     = color.RGBA{R: 192, G: 192, B: 192, A: 255}
-	darkGreen  = color.RGBA{R: 10, G: 64, B: 12, A: 255}
+	Red        = color.RGBA{R: 237, G: 63, B: 39, A: 255}
+	OldRed     = color.RGBA{R: 171, G: 68, B: 89, A: 255}
+	Yellow     = color.RGBA{R: 255, G: 204, B: 0, A: 255}
+	Green      = color.RGBA{R: 52, G: 199, B: 89, A: 255}
+	Blue       = color.RGBA{R: 0, G: 122, B: 255, A: 255}
+	Black      = color.RGBA{R: 27, G: 24, B: 51, A: 255}
+	LightBrown = color.RGBA{R: 210, G: 180, B: 140, A: 255}
+	White      = color.RGBA{R: 255, G: 255, B: 255, A: 255}
+	CrimsonRed = color.RGBA{R: 220, G: 20, B: 60, A: 255}
+	Plume      = color.RGBA{R: 107, G: 63, B: 105, A: 255}
+	Grey       = color.RGBA{R: 55, G: 53, B: 62, A: 255}
+	LightGrey  = color.RGBA{R: 211, G: 218, B: 217, A: 255}
+	Peach      = color.RGBA{R: 242, G: 159, B: 88, A: 255}
+	Orange     = color.RGBA{R: 255, G: 149, B: 0, A: 255}
+	Purple     = color.RGBA{R: 175, G: 82, B: 222, A: 255}
+	Cyan       = color.RGBA{R: 50, G: 173, B: 230, A: 255}
+	Magenta    = color.RGBA{R: 255, G: 45, B: 85, A: 255}
+	Lime       = color.RGBA{R: 204, G: 255, B: 0, A: 255}
+	Teal       = color.RGBA{R: 90, G: 200, B: 250, A: 255}
+	Brown      = color.RGBA{R: 162, G: 132, B: 94, A: 255}
+	Pink       = color.RGBA{R: 255, G: 105, B: 180, A: 255}
+	Gold       = color.RGBA{R: 255, G: 215, B: 0, A: 255}
+	Silver     = color.RGBA{R: 192, G: 192, B: 192, A: 255}
+	DarkGreen  = color.RGBA{R: 10, G: 64, B: 12, A: 255}
 
-	palette = []color.Color{
-		red, yellow, green, blue, black, lightBrown, plume, grey, peach, oldRed,
-		orange, purple, cyan, magenta, lime, teal, brown, pink, gold, silver, darkGreen,
+	Palette = []color.Color{
+		Red, Yellow, Green, Blue, Black, LightBrown, Plume, Grey, Peach, OldRed,
+		Orange, Purple, Cyan, Magenta, Lime, Teal, Brown, Pink, Gold, Silver, DarkGreen,
 	}
 
-	accentColors = map[color.Color]color.Color{
-		red:        orange,
-		yellow:     red,
-		green:      black,
-		blue:       white,
-		black:      crimsonRed,
-		lightBrown: black,
-		plume:      white,
-		grey:       lightGrey,
-		peach:      oldRed,
-		oldRed:     peach,
-		orange:     white,
-		purple:     white,
-		cyan:       black,
-		magenta:    white,
-		lime:       black,
-		teal:       black,
-		brown:      white,
-		pink:       black,
-		gold:       black,
-		silver:     red,
-		darkGreen:  white,
+	AccentColors = map[color.Color]color.Color{
+		Red:        Orange,
+		Yellow:     Red,
+		Green:      Black,
+		Blue:       White,
+		Black:      CrimsonRed,
+		LightBrown: Black,
+		Plume:      White,
+		Grey:       LightGrey,
+		Peach:      OldRed,
+		OldRed:     Peach,
+		Orange:     White,
+		Purple:     White,
+		Cyan:       Black,
+		Magenta:    White,
+		Lime:       Black,
+		Teal:       Black,
+		Brown:      White,
+		Pink:       Black,
+		Gold:       Black,
+		Silver:     Red,
+		DarkGreen:  White,
 	}
 
-	gridWidth   int
-	gridHeight  int
-	gridOriginX int
-	gridOriginY int
+	GridWidth   int
+	GridHeight  int
+	GridOriginX int
+	GridOriginY int
 
-	backgroundColor = color.RGBA{R: 245, G: 239, B: 230, A: 255}
-	hatchingColor   = color.RGBA{R: 203, G: 220, B: 235, A: 255} // Light purple
-	shadowColor     = color.RGBA{R: 0, G: 0, B: 0, A: 128}
+	BackgroundColor = color.RGBA{R: 245, G: 239, B: 230, A: 255}
+	HatchingColor   = color.RGBA{R: 203, G: 220, B: 235, A: 255} // Light purple
+	ShadowColor     = color.RGBA{R: 0, G: 0, B: 0, A: 128}
 
-	hatchingPattern *ebiten.Image
+	HatchingPattern *ebiten.Image
 
-	mTextFace font.Face
+	MTextFace font.Face
 )
 
 func init() {
-	gridWidth = gridSize*squareSize + (gridSize-1)*gap
-	gridHeight = gridSize*squareSize + (gridSize-1)*gap
-	gridOriginX = (screenWidth - gridWidth) / 2
-	gridOriginY = (screenHeight - gridHeight) / 2
+	GridWidth = GridSize*squareSize + (GridSize-1)*gap
+	GridHeight = GridSize*squareSize + (GridSize-1)*gap
+	GridOriginX = (ScreenWidth - GridWidth) / 2
+	GridOriginY = (ScreenHeight - GridHeight) / 2
 
 	patternSize := 20
-	hatchingPattern = ebiten.NewImage(patternSize, patternSize)
+	HatchingPattern = ebiten.NewImage(patternSize, patternSize)
 	for i := -patternSize; i < patternSize; i += 4 {
-		vector.StrokeLine(hatchingPattern, float32(i), 0, float32(i+patternSize), float32(patternSize), 1, hatchingColor, false)
+		vector.StrokeLine(HatchingPattern, float32(i), 0, float32(i+patternSize), float32(patternSize), 1, HatchingColor, false)
 	}
 
 	ttf, err := opentype.Parse(fonts.MPlus1pRegular_ttf)
@@ -112,14 +111,15 @@ func init() {
 		log.Fatal(err)
 	}
 
-	mTextFace, err = opentype.NewFace(ttf, &opentype.FaceOptions{
+	baseFace, err := opentype.NewFace(ttf, &opentype.FaceOptions{
 		Size:    24,
 		DPI:     72,
-		Hinting: font.HintingVertical,
+		Hinting: font.HintingFull,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
+	MTextFace = baseFace
 }
 
 type Game struct {
@@ -129,6 +129,118 @@ type Game struct {
 	selectedY int
 	grid      [][]color.Color
 	moveCount int
+	score     int // Added score field
+}
+
+// Coordinate represents a position on the grid
+type Coordinate struct {
+	R, C int
+}
+
+// Group represents a contiguous group of same-colored items
+type Group struct {
+	Color       color.Color
+	Coordinates []Coordinate
+	MinR, MaxR  int // Bounding box for shape detection
+	MinC, MaxC  int // Bounding box for shape detection
+}
+
+func (g *Game) findGroups() []Group {
+	visited := make([][]bool, GridSize)
+	for i := range visited {
+		visited[i] = make([]bool, GridSize)
+	}
+
+	var groups []Group
+
+	for r := 0; r < GridSize; r++ {
+		for c := 0; c < GridSize; c++ {
+			if !visited[r][c] {
+				currentGroup := Group{
+					Color:       g.grid[r][c],
+					Coordinates: []Coordinate{},
+					MinR:        r,
+					MaxR:        r,
+					MinC:        c,
+					MaxC:        c,
+				}
+
+				g.dfs(r, c, g.grid[r][c], &currentGroup, visited)
+				groups = append(groups, currentGroup)
+			}
+		}
+	}
+	return groups
+}
+
+func (g *Game) dfs(r, c int, targetColor color.Color, currentGroup *Group, visited [][]bool) {
+	// Check bounds and if already visited or color mismatch
+	if r < 0 || r >= GridSize || c < 0 || c >= GridSize || visited[r][c] || !colorsEqual(g.grid[r][c], targetColor) {
+		return
+	}
+
+	visited[r][c] = true
+	currentGroup.Coordinates = append(currentGroup.Coordinates, Coordinate{R: r, C: c})
+
+	// Update bounding box
+	if r < currentGroup.MinR {
+		currentGroup.MinR = r
+	}
+	if r > currentGroup.MaxR {
+		currentGroup.MaxR = r
+	}
+	if c < currentGroup.MinC {
+		currentGroup.MinC = c
+	}
+	if c > currentGroup.MaxC {
+		currentGroup.MaxC = c
+	}
+
+	// Explore neighbors
+	g.dfs(r+1, c, targetColor, currentGroup, visited)
+	g.dfs(r-1, c, targetColor, currentGroup, visited)
+	g.dfs(r, c+1, targetColor, currentGroup, visited)
+	g.dfs(r, c-1, targetColor, currentGroup, visited)
+}
+
+// colorsEqual is a helper function to compare two color.Color values
+func colorsEqual(c1, c2 color.Color) bool {
+	r1, g1, b1, a1 := c1.RGBA()
+	r2, g2, b2, a2 := c2.RGBA()
+	return r1 == r2 && g1 == g2 && b1 == b2 && a1 == a2
+}
+
+func (g *Game) calculateScore(group Group) int {
+	// A group must have at least 2 items to be considered for scoring
+	if len(group.Coordinates) < 2 {
+		return 0
+	}
+
+	width := group.MaxC - group.MinC + 1
+	height := group.MaxR - group.MinR + 1
+
+	// Line shape (for example 7 items) we count one point for each item in the group
+	if width == 1 || height == 1 {
+		return len(group.Coordinates)
+	}
+
+	// 2 by X shape (for example 6 items arrranged in 2x3, we count 6 (number of items in the group) multiplied by the one side (2) and by the other side (3) = 6 x 6 = 36
+	if (width == 2 && height >= 2) || (height == 2 && width >= 2) {
+		// Ensure it's a perfect rectangle of 2xX or Xx2
+		if len(group.Coordinates) == width*height {
+			return len(group.Coordinates) * width * height
+		}
+	}
+
+	// 3x3 shape (9 items) we count 9 points for group by 3 by 3 = 9 x 9 = 81 points.
+	if width == 3 && height == 3 {
+		// Ensure it's a perfect 3x3 square
+		if len(group.Coordinates) == 9 {
+			return len(group.Coordinates) * width * height
+		}
+	}
+
+	return 0 // No score for other shapes or incomplete rectangles
 }
 
 func (g *Game) Update() error {
@@ -136,10 +248,10 @@ func (g *Game) Update() error {
 
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		clicked := false
-		for i := 0; i < gridSize; i++ {
-			for j := 0; j < gridSize; j++ {
-				x := gridOriginX + i*(squareSize+gap)
-				y := gridOriginY + j*(squareSize+gap)
+		for i := 0; i < GridSize; i++ {
+			for j := 0; j < GridSize; j++ {
+				x := GridOriginX + i*(squareSize+gap)
+				y := GridOriginY + j*(squareSize+gap)
 				if g.mouseX >= x && g.mouseX < x+squareSize && g.mouseY >= y && g.mouseY < y+squareSize {
 					if g.selectedX == -1 {
 						// Select a square
@@ -153,6 +265,15 @@ func (g *Game) Update() error {
 						// Swap squares
 						g.grid[g.selectedY][g.selectedX], g.grid[j][i] = g.grid[j][i], g.grid[g.selectedY][g.selectedX]
 						g.moveCount++
+
+						// Calculate score after swap
+						currentScore := 0
+						groups := g.findGroups()
+						for _, group := range groups {
+							currentScore += g.calculateScore(group)
+						}
+						g.score = currentScore
+
 						g.selectedX = -1
 						g.selectedY = -1
 					}
@@ -169,24 +290,24 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	screen.Fill(backgroundColor)
+	screen.Fill(BackgroundColor)
 
 	// Draw hatching pattern
-	patternSize := hatchingPattern.Bounds().Dx()
-	for i := 0; i < screenWidth; i += patternSize {
-		for j := 0; j < screenHeight; j += patternSize {
+	patternSize := HatchingPattern.Bounds().Dx()
+	for i := 0; i < ScreenWidth; i += patternSize {
+		for j := 0; j < ScreenHeight; j += patternSize {
 			op := &ebiten.DrawImageOptions{}
 			op.GeoM.Translate(float64(i), float64(j))
-			screen.DrawImage(hatchingPattern, op)
+			screen.DrawImage(HatchingPattern, op)
 		}
 	}
 
 	shadowOffset := 2
 
-	for i := range gridSize {
-		for j := range gridSize {
-			x := gridOriginX + i*(squareSize+gap)
-			y := gridOriginY + j*(squareSize+gap)
+	for i := range GridSize {
+		for j := range GridSize {
+			x := GridOriginX + i*(squareSize+gap)
+			y := GridOriginY + j*(squareSize+gap)
 
 			hovered := g.mouseX >= x && g.mouseX < x+squareSize && g.mouseY >= y && g.mouseY < y+squareSize
 
@@ -194,16 +315,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 			// Draw shadow
 			if !hovered && !(i == g.selectedX && j == g.selectedY) {
-				vector.DrawFilledRect(screen, float32(x+shadowOffset), float32(y+shadowOffset), float32(squareSize), float32(squareSize), shadowColor, false)
+				vector.DrawFilledRect(screen, float32(x+shadowOffset), float32(y+shadowOffset), float32(squareSize), float32(squareSize), ShadowColor, false)
 			} else if hovered {
 				drawX += 1
 				drawY += 1
 			}
 
 			mainColor := g.grid[j][i]
-			accentColor, ok := accentColors[mainColor]
+			accentColor, ok := AccentColors[mainColor]
 			if !ok {
-				accentColor = white // Default to white
+				accentColor = White // Default to white
 			}
 
 			if i == g.selectedX && j == g.selectedY {
@@ -211,7 +332,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				cx := float32(drawX + squareSize/2)
 				cy := float32(drawY + squareSize/2)
 				r := float32(squareSize / 2)
-				vector.DrawFilledCircle(screen, cx+float32(shadowOffset), cy+float32(shadowOffset), r, shadowColor, true)
+				vector.DrawFilledCircle(screen, cx+float32(shadowOffset), cy+float32(shadowOffset), r, ShadowColor, true)
 
 				// Draw selected circle
 				vector.DrawFilledCircle(screen, cx, cy, r, mainColor, true)
@@ -241,14 +362,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// Draw move counter
 	moveCountStr := fmt.Sprintf("Moves: %d", g.moveCount)
-	text.Draw(screen, moveCountStr, mTextFace, 10, screenHeight-10, color.Black)
+	text.Draw(screen, moveCountStr, MTextFace, 10, ScreenHeight-10, color.Black)
+
+	// Draw score
+	scoreStr := fmt.Sprintf("Score: %d", g.score)
+	text.Draw(screen, scoreStr, MTextFace, 10, ScreenHeight-40, color.Black)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return screenWidth, screenHeight
+	return ScreenWidth, ScreenHeight
 }
 
-func createRainbowIcon(size int) image.Image {
+func CreateRainbowIcon(size int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, size, size))
 	for y := 0; y < size; y++ {
 		for x := 0; x < size; x++ {
@@ -263,13 +388,12 @@ func createRainbowIcon(size int) image.Image {
 	return img
 }
 
-func generateColorCounts(palette []color.Color, gridSize int) []int {
-	rand.Seed(time.Now().UnixNano())
+func generateColorCounts(palette []color.Color, GridSize int) []int {
 	counts := make([]int, len(palette))
 	sum := 0
 
 	// First, assign a random number between 2 and 10 to each color
-	for i := 0; i < len(palette); i++ {
+	for i := range palette {
 		counts[i] = rand.Intn(9) + 2 // 2 to 10
 	}
 
@@ -298,22 +422,22 @@ func generateColorCounts(palette []color.Color, gridSize int) []int {
 }
 
 func main() {
-	icons := []image.Image{createRainbowIcon(16), createRainbowIcon(32), createRainbowIcon(48)}
+	icons := []image.Image{CreateRainbowIcon(16), CreateRainbowIcon(32), CreateRainbowIcon(48)}
 	ebiten.SetWindowIcon(icons)
-	ebiten.SetWindowSize(screenWidth, screenHeight)
+	ebiten.SetWindowSize(ScreenWidth, ScreenHeight)
 	ebiten.SetWindowTitle("Zesty Zen")
 
 	game := &Game{
 		selectedX: -1,
 		selectedY: -1,
-		grid:      make([][]color.Color, gridSize),
+		grid:      make([][]color.Color, GridSize),
 		moveCount: 0,
 	}
 
-	counts := generateColorCounts(palette, gridSize)
+	counts := generateColorCounts(Palette, GridSize)
 
-	shuffledColors := make([]color.Color, 0, gridSize*gridSize)
-	for i, c := range palette {
+	shuffledColors := make([]color.Color, 0, GridSize*GridSize)
+	for i, c := range Palette {
 		for j := 0; j < counts[i]; j++ {
 			shuffledColors = append(shuffledColors, c)
 		}
@@ -325,9 +449,9 @@ func main() {
 
 	// Populate the grid with shuffled colors
 	for i := range game.grid {
-		game.grid[i] = make([]color.Color, gridSize)
+		game.grid[i] = make([]color.Color, GridSize)
 		for j := range game.grid[i] {
-			game.grid[i][j] = shuffledColors[i*gridSize+j]
+			game.grid[i][j] = shuffledColors[i*GridSize+j]
 		}
 	}
 
