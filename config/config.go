@@ -13,11 +13,12 @@ import (
 )
 
 const (
-	ScreenWidth  = 800
-	ScreenHeight = 640
-	GridSize     = 10
-	SquareSize   = 48
-	Gap          = 8
+	ScreenWidth    = 800
+	ScreenHeight   = 640
+	GridSize       = 10
+	SquareSize     = 48
+	Gap            = 8
+	AnimationSpeed = 0.08 // Adjust to control animation duration (1.0 / value = frames)
 )
 
 var (

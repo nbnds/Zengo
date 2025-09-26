@@ -33,69 +33,111 @@ func drawBackground(screen *ebiten.Image) {
 }
 
 func drawBoard(screen *ebiten.Image, b *board.Board, mouseX int, mouseY int) {
-	shadowOffset := 2
-	grid := b.Grid()
-	selectedX, selectedY := b.Selected()
+	if b.IsAnimating {
+		// Animation logic
+		p1x, p1y, p2x, p2y := b.AnimatingPieces()
+		progress := b.AnimationProgress
 
-	for i := range config.GridSize {
-		for j := range config.GridSize {
-			x := config.GridOriginX + i*(config.SquareSize+config.Gap)
-			y := config.GridOriginY + j*(config.SquareSize+config.Gap)
+		// Calculate interpolated positions in terms of screen coordinates
+		p1StartX := float64(config.GridOriginX + p1x*(config.SquareSize+config.Gap))
+		p1StartY := float64(config.GridOriginY + p1y*(config.SquareSize+config.Gap))
+		p1EndX := float64(config.GridOriginX + p2x*(config.SquareSize+config.Gap))
+		p1EndY := float64(config.GridOriginY + p2y*(config.SquareSize+config.Gap))
 
-			hovered := mouseX >= x && mouseX < x+config.SquareSize && mouseY >= y && mouseY < y+config.SquareSize
+		p1CurrentX := p1StartX + (p1EndX-p1StartX)*progress
+		p1CurrentY := p1StartY + (p1EndY-p1StartY)*progress
 
-			drawX, drawY := x, y
+		p2CurrentX := p1EndX + (p1StartX-p1EndX)*progress
+		p2CurrentY := p1EndY + (p1StartY-p1EndY)*progress
 
-			// Draw shadow
-			if !hovered && !(i == selectedX && j == selectedY) {
-				vector.DrawFilledRect(screen, float32(x+shadowOffset), float32(y+shadowOffset), float32(config.SquareSize), float32(config.SquareSize), config.ShadowColor, false)
-			} else if hovered {
-				drawX += 1
-				drawY += 1
+		// Draw all non-animating pieces
+		for i := 0; i < config.GridSize; i++ {
+			for j := 0; j < config.GridSize; j++ {
+				if (i == p1x && j == p1y) || (i == p2x && j == p2y) {
+					continue // Skip animating pieces, they will be drawn on top
+				}
+				drawPiece(screen, b, i, j, -1, -1) // Pass -1 for mouse to avoid hover effects
 			}
+		}
 
-			mainColor := grid[j][i]
-			if mainColor == nil {
-				continue // Don't draw empty cells
-			}
-			accentColor, ok := config.AccentColors[mainColor]
-			if !ok {
-				accentColor = config.White // Default to white
-			}
+		// Draw the two animating pieces at their interpolated positions
+		color1 := b.Grid()[p1y][p1x]
+		color2 := b.Grid()[p2y][p2x]
+		drawPieceAt(screen, color1, p1CurrentX, p1CurrentY, false)
+		drawPieceAt(screen, color2, p2CurrentX, p2CurrentY, false)
 
-			if i == selectedX && j == selectedY {
-				// Draw circular shadow for selected circle
-				cx := float32(drawX + config.SquareSize/2)
-				cy := float32(drawY + config.SquareSize/2)
-				r := float32(config.SquareSize / 2)
-				vector.DrawFilledCircle(screen, cx+float32(shadowOffset), cy+float32(shadowOffset), r, config.ShadowColor, true)
-
-				// Draw selected circle
-				vector.DrawFilledCircle(screen, cx, cy, r, mainColor, true)
-
-				// Draw accent circle in the middle
-				accentR := float32(config.SquareSize / 8)
-				vector.DrawFilledCircle(screen, cx, cy, accentR, accentColor, true)
-
-			} else {
-				// Draw normal square
-				square := ebiten.NewImage(config.SquareSize, config.SquareSize)
-				square.Fill(mainColor)
-				op := &ebiten.DrawImageOptions{}
-				op.GeoM.Translate(float64(drawX), float64(drawY))
-				screen.DrawImage(square, op)
-
-				// Draw accent square
-				accentSize := config.SquareSize / 4
-				accentSquare := ebiten.NewImage(accentSize, accentSize)
-				accentSquare.Fill(accentColor)
-				accentOp := &ebiten.DrawImageOptions{}
-				accentOp.GeoM.Translate(float64(drawX+config.SquareSize/8), float64(drawY+config.SquareSize/8))
-				screen.DrawImage(accentSquare, accentOp)
+	} else {
+		// Original drawing logic if not animating
+		for i := 0; i < config.GridSize; i++ {
+			for j := 0; j < config.GridSize; j++ {
+				drawPiece(screen, b, i, j, mouseX, mouseY)
 			}
 		}
 	}
 }
+
+// drawPiece draws a single piece from the board at its grid position (i, j).
+func drawPiece(screen *ebiten.Image, b *board.Board, i, j, mouseX, mouseY int) {
+	x := config.GridOriginX + i*(config.SquareSize+config.Gap)
+	y := config.GridOriginY + j*(config.SquareSize+config.Gap)
+	selectedX, selectedY := b.Selected()
+	isSelected := (i == selectedX && j == selectedY)
+	isHovered := mouseX >= x && mouseX < x+config.SquareSize && mouseY >= y && mouseY < y+config.SquareSize
+
+	drawX, drawY := float64(x), float64(y)
+
+	// Apply hover effect if not selected
+	if isHovered && !isSelected {
+		drawX += 1
+		drawY += 1
+	}
+
+	// Draw shadow unless it's selected or hovered
+	if !isSelected && !isHovered {
+		shadowOffset := 2
+		vector.DrawFilledRect(screen, float32(x+shadowOffset), float32(y+shadowOffset), float32(config.SquareSize), float32(config.SquareSize), config.ShadowColor, false)
+	}
+
+	color := b.Grid()[j][i]
+	drawPieceAt(screen, color, drawX, drawY, isSelected)
+}
+
+// drawPieceAt draws a single piece with a given color at a specific screen coordinate.
+func drawPieceAt(screen *ebiten.Image, pieceColor color.Color, x, y float64, isSelected bool) {
+	if pieceColor == nil {
+		return // Don't draw empty cells
+	}
+
+	accentColor, ok := config.AccentColors[pieceColor]
+	if !ok {
+		accentColor = config.White // Default to white
+	}
+
+	if isSelected {
+		shadowOffset := 2
+		cx := float32(x + float64(config.SquareSize)/2)
+		cy := float32(y + float64(config.SquareSize)/2)
+		r := float32(config.SquareSize / 2)
+		vector.DrawFilledCircle(screen, cx+float32(shadowOffset), cy+float32(shadowOffset), r, config.ShadowColor, true)
+		vector.DrawFilledCircle(screen, cx, cy, r, pieceColor, true)
+		accentR := float32(config.SquareSize / 8)
+		vector.DrawFilledCircle(screen, cx, cy, accentR, accentColor, true)
+	} else {
+		square := ebiten.NewImage(config.SquareSize, config.SquareSize)
+		square.Fill(pieceColor)
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(x, y)
+		screen.DrawImage(square, op)
+
+		accentSize := config.SquareSize / 4
+		accentSquare := ebiten.NewImage(accentSize, accentSize)
+		accentSquare.Fill(accentColor)
+		accentOp := &ebiten.DrawImageOptions{}
+		accentOp.GeoM.Translate(x+float64(config.SquareSize)/8, y+float64(config.SquareSize)/8)
+		screen.DrawImage(accentSquare, accentOp)
+	}
+}
+
 
 func drawUI(screen *ebiten.Image, score int, moveCount int) {
 	// Draw move counter

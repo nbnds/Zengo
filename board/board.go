@@ -8,17 +8,25 @@ import (
 
 // Board represents the game board and its state.
 type Board struct {
-	grid      [][]color.Color
-	selectedX int
-	selectedY int
+	grid              [][]color.Color
+	selectedX         int
+	selectedY         int
+	IsAnimating       bool
+	AnimationProgress float64
+	animatingPiece1X  int
+	animatingPiece1Y  int
+	animatingPiece2X  int
+	animatingPiece2Y  int
 }
 
 // New creates a new, initialized game board.
 func New() *Board {
 	b := &Board{
-		selectedX: -1,
-		selectedY: -1,
-		grid:      make([][]color.Color, config.GridSize),
+		selectedX:         -1,
+		selectedY:         -1,
+		grid:              make([][]color.Color, config.GridSize),
+		IsAnimating:       false,
+		AnimationProgress: 0,
 	}
 
 	// Initialize grid with random colors
@@ -53,9 +61,17 @@ func (b *Board) Selected() (int, int) {
 	return b.selectedX, b.selectedY
 }
 
+// AnimatingPieces returns the coordinates of the two pieces being animated.
+func (b *Board) AnimatingPieces() (int, int, int, int) {
+	return b.animatingPiece1X, b.animatingPiece1Y, b.animatingPiece2X, b.animatingPiece2Y
+}
+
 // HandleInput processes a mouse click at the given screen coordinates.
 // It returns true if a move was made (a swap occurred).
 func (b *Board) HandleInput(mouseX, mouseY int) (moveMade bool) {
+	if b.IsAnimating {
+		return false
+	}
 	for i := 0; i < config.GridSize; i++ {
 		for j := 0; j < config.GridSize; j++ {
 			x := config.GridOriginX + i*(config.SquareSize+config.Gap)
@@ -71,17 +87,41 @@ func (b *Board) HandleInput(mouseX, mouseY int) (moveMade bool) {
 					b.selectedX = -1
 					b.selectedY = -1
 				} else {
-					// Swap squares
-					b.grid[b.selectedY][b.selectedX], b.grid[j][i] = b.grid[j][i], b.grid[b.selectedY][b.selectedX]
+					// Start animation
+					b.IsAnimating = true
+					b.AnimationProgress = 0
+					b.animatingPiece1X = b.selectedX
+					b.animatingPiece1Y = b.selectedY
+					b.animatingPiece2X = i
+					b.animatingPiece2Y = j
+
 					b.selectedX = -1
 					b.selectedY = -1
-					return true // Move was made
+					return true // Move was initiated
 				}
 				return false // Click was handled, but no move was made
 			}
 		}
 	}
 	return false // Click was outside the grid
+}
+
+// UpdateAnimation progresses the piece swapping animation.
+// It returns true when the animation is finished.
+func (b *Board) UpdateAnimation() (animationFinished bool) {
+	if !b.IsAnimating {
+		return false
+	}
+
+	b.AnimationProgress += config.AnimationSpeed
+	if b.AnimationProgress >= 1.0 {
+		b.AnimationProgress = 1.0
+		// Swap pieces in the grid
+		b.grid[b.animatingPiece1Y][b.animatingPiece1X], b.grid[b.animatingPiece2Y][b.animatingPiece2X] = b.grid[b.animatingPiece2Y][b.animatingPiece2X], b.grid[b.animatingPiece1Y][b.animatingPiece1X]
+		b.IsAnimating = false
+		return true // Animation finished
+	}
+	return false
 }
 
 // generateColorCounts is a helper for New to create the initial grid state.

@@ -1,6 +1,7 @@
 package game
 
 import (
+	"zenmojo/audio"
 	"zenmojo/board"
 	"zenmojo/config"
 	"zenmojo/scoring"
@@ -12,20 +13,22 @@ import (
 
 // Game holds all game state and logic.
 type Game struct {
-	board     *board.Board
-	mouseX    int
-	mouseY    int
-	moveCount int
-	score     int
+	board        *board.Board
+	mouseX       int
+	mouseY       int
+	moveCount    int
+	score        int
+	audioManager *audio.Manager
 }
 
 // NewGame creates a new, initialized Game object.
-func NewGame() *Game {
+func NewGame(audioManager *audio.Manager) *Game {
 	b := board.New()
 	g := &Game{
-		board:     b,
-		moveCount: 0,
-		score:     scoring.CalculateScore(b.Grid(), scoring.StandardRuleSet{}), // Calculate initial score
+		board:        b,
+		moveCount:    0,
+		score:        scoring.CalculateScore(b.Grid(), scoring.StandardRuleSet{}), // Calculate initial score
+		audioManager: audioManager,
 	}
 	return g
 }
@@ -34,10 +37,14 @@ func NewGame() *Game {
 func (g *Game) Update() error {
 	g.mouseX, g.mouseY = ebiten.CursorPosition()
 
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		if moveMade := g.board.HandleInput(g.mouseX, g.mouseY); moveMade {
+	if animationFinished := g.board.UpdateAnimation(); animationFinished {
+		g.score = scoring.CalculateScore(g.board.Grid(), scoring.StandardRuleSet{})
+	}
+
+	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+		if moveInitiated := g.board.HandleInput(g.mouseX, g.mouseY); moveInitiated {
 			g.moveCount++
-			g.score = scoring.CalculateScore(g.board.Grid(), scoring.StandardRuleSet{})
+			g.audioManager.PlayMoveSound()
 		}
 	}
 	return nil

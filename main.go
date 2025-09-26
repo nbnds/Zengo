@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"zenmojo/audio"
 	"zenmojo/config"
 	"zenmojo/game"
 
@@ -14,8 +15,11 @@ func main() {
 	ebiten.SetWindowSize(config.ScreenWidth, config.ScreenHeight)
 	ebiten.SetWindowTitle("Zesty Zen")
 
+	// Create a new audio manager
+	audioManager := audio.NewManager()
+
 	// Create and run the game
-	game := game.NewGame()
+	game := game.NewGame(audioManager)
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}
