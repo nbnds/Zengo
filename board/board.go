@@ -4,6 +4,8 @@ import (
 	"image/color"
 	"math/rand"
 	"zenmojo/config"
+
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 // Board represents the game board and its state.
@@ -13,6 +15,7 @@ type Board struct {
 	selectedY         int
 	IsAnimating       bool
 	AnimationProgress float64
+	animationDuration float64
 	animatingPiece1X  int
 	animatingPiece1Y  int
 	animatingPiece2X  int
@@ -66,6 +69,11 @@ func (b *Board) AnimatingPieces() (int, int, int, int) {
 	return b.animatingPiece1X, b.animatingPiece1Y, b.animatingPiece2X, b.animatingPiece2Y
 }
 
+// AnimationDuration returns the duration of the current animation in seconds.
+func (b *Board) AnimationDuration() float64 {
+	return b.animationDuration
+}
+
 // HandleInput processes a mouse click at the given screen coordinates.
 // It returns true if a move was made (a swap occurred).
 func (b *Board) HandleInput(mouseX, mouseY int) (moveMade bool) {
@@ -95,15 +103,18 @@ func (b *Board) HandleInput(mouseX, mouseY int) (moveMade bool) {
 					b.animatingPiece2X = i
 					b.animatingPiece2Y = j
 
+					// Calculate duration
+					b.animationDuration = config.SwapAnimationDuration * config.StretchFactor
+
 					b.selectedX = -1
 					b.selectedY = -1
 					return true // Move was initiated
 				}
-				return false // Click was handled, but no move was made
+				return false
 			}
 		}
 	}
-	return false // Click was outside the grid
+	return false
 }
 
 // UpdateAnimation progresses the piece swapping animation.
@@ -113,7 +124,14 @@ func (b *Board) UpdateAnimation() (animationFinished bool) {
 		return false
 	}
 
-	b.AnimationProgress += config.AnimationSpeed
+	// Update progress based on time
+	if b.animationDuration > 0 {
+		elapsed := 1.0 / float64(ebiten.TPS())
+		b.AnimationProgress += elapsed / b.animationDuration
+	} else {
+		b.AnimationProgress = 1.0
+	}
+
 	if b.AnimationProgress >= 1.0 {
 		b.AnimationProgress = 1.0
 		// Swap pieces in the grid

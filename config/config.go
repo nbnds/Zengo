@@ -13,12 +13,13 @@ import (
 )
 
 const (
-	ScreenWidth    = 800
-	ScreenHeight   = 640
-	GridSize       = 10
-	SquareSize     = 48
-	Gap            = 8
-	AnimationSpeed = 0.08 // Adjust to control animation duration (1.0 / value = frames)
+	ScreenWidth  = 800
+	ScreenHeight = 640
+	GridSize     = 10
+	SquareSize   = 48
+	Gap          = 8
+	SwapAnimationDuration = 0.2 // Base duration for a swap animation in seconds
+	StretchFactor = 1.0 // Multiplies the animation duration. Higher values are slower.
 )
 
 var (

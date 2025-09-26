@@ -44,7 +44,8 @@ func (g *Game) Update() error {
 	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 		if moveInitiated := g.board.HandleInput(g.mouseX, g.mouseY); moveInitiated {
 			g.moveCount++
-			g.audioManager.PlayMoveSound()
+			duration := g.board.AnimationDuration() // Add a small buffer to ensure sound syncs with animation end
+			g.audioManager.PlayMoveSound(duration)
 		}
 	}
 	return nil
