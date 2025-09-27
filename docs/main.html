@@ -2,7 +2,14 @@
 <script src="wasm_exec.js"></script>
 <script>
 const go = new Go();
-WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then(result => {
-    go.run(result.instance);
-});
+(async () => {
+    try {
+        const resp = await fetch("main.wasm");
+        const source = await resp.arrayBuffer();
+        const result = await WebAssembly.instantiate(source, go.importObject);
+        await go.run(result.instance);
+    } catch (err) {
+        console.error("WASM Error:", err);
+    }
+})();
 </script>
