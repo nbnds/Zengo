@@ -22,32 +22,30 @@ type Board struct {
 	animatingPiece2Y  int
 }
 
-// New creates a new, initialized game board.
+// New creates a new, initialized game board with a random, valid layout.
 func New() *Board {
 	b := &Board{
-		selectedX:         -1,
-		selectedY:         -1,
-		grid:              make([][]color.Color, config.GridSize),
-		IsAnimating:       false,
-		AnimationProgress: 0,
+		selectedX: -1,
+		selectedY: -1,
+		grid:      make([][]color.Color, config.GridSize),
 	}
 
-	// Initialize grid with random colors
-	counts := generateColorCounts(config.Palette, config.GridSize)
-	shuffledColors := make([]color.Color, 0, config.GridSize*config.GridSize)
-	for i, c := range config.Palette {
-		for j := 0; j < counts[i]; j++ {
-			shuffledColors = append(shuffledColors, c)
-		}
+	// Create a slice of 100 colors with a balanced distribution from the palette.
+	colors := make([]color.Color, 0, config.GridSize*config.GridSize)
+	for i := 0; i < config.GridSize*config.GridSize; i++ {
+		colors = append(colors, config.Palette[i%len(config.Palette)])
 	}
-	rand.Shuffle(len(shuffledColors), func(i, j int) {
-		shuffledColors[i], shuffledColors[j] = shuffledColors[j], shuffledColors[i]
+
+	// Shuffle the colors to create a random board.
+	rand.Shuffle(len(colors), func(i, j int) {
+		colors[i], colors[j] = colors[j], colors[i]
 	})
 
-	for i := range b.grid {
+	// Populate the grid with the shuffled colors.
+	for i := 0; i < config.GridSize; i++ {
 		b.grid[i] = make([]color.Color, config.GridSize)
-		for j := range b.grid[i] {
-			b.grid[i][j] = shuffledColors[i*config.GridSize+j]
+		for j := 0; j < config.GridSize; j++ {
+			b.grid[i][j] = colors[i*config.GridSize+j]
 		}
 	}
 
@@ -142,33 +140,4 @@ func (b *Board) UpdateAnimation() (animationFinished bool) {
 	return false
 }
 
-// generateColorCounts is a helper for New to create the initial grid state.
-func generateColorCounts(palette []color.Color, GridSize int) []int {
-	counts := make([]int, len(palette))
-	sum := 0
 
-	for i := range palette {
-		counts[i] = rand.Intn(9) + 2 // 2 to 10
-	}
-
-	for {
-		sum = 0
-		for _, c := range counts {
-			sum += c
-		}
-		if sum == 100 {
-			break
-		}
-		idx := rand.Intn(len(palette))
-		if sum > 100 {
-			if counts[idx] > 2 {
-				counts[idx]--
-			}
-		} else {
-			if counts[idx] < 10 {
-				counts[idx]++
-			}
-		}
-	}
-	return counts
-}
