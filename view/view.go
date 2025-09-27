@@ -11,6 +11,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
+//go:noinline
 // Draw renders the entire game screen.
 func Draw(screen *ebiten.Image, b *board.Board, score int, moveCount int, mouseX int, mouseY int) {
 	drawBackground(screen)
@@ -18,6 +19,7 @@ func Draw(screen *ebiten.Image, b *board.Board, score int, moveCount int, mouseX
 	drawUI(screen, score, moveCount)
 }
 
+//go:noinline
 func drawBackground(screen *ebiten.Image) {
 	screen.Fill(config.BackgroundColor)
 
@@ -32,6 +34,7 @@ func drawBackground(screen *ebiten.Image) {
 	}
 }
 
+//go:noinline
 func drawBoard(screen *ebiten.Image, b *board.Board, mouseX int, mouseY int) {
 	if b.IsAnimating {
 		// Animation logic
@@ -76,6 +79,7 @@ func drawBoard(screen *ebiten.Image, b *board.Board, mouseX int, mouseY int) {
 	}
 }
 
+//go:noinline
 // drawPiece draws a single piece from the board at its grid position (i, j).
 func drawPiece(screen *ebiten.Image, b *board.Board, i, j, mouseX, mouseY int) {
 	x := config.GridOriginX + i*(config.SquareSize+config.Gap)
@@ -102,6 +106,7 @@ func drawPiece(screen *ebiten.Image, b *board.Board, i, j, mouseX, mouseY int) {
 	drawPieceAt(screen, color, drawX, drawY, isSelected)
 }
 
+//go:noinline
 // drawPieceAt dispatches drawing to specialized functions based on selection state.
 func drawPieceAt(screen *ebiten.Image, pieceColor color.Color, x, y float64, isSelected bool) {
 	if pieceColor == nil {
@@ -114,6 +119,7 @@ func drawPieceAt(screen *ebiten.Image, pieceColor color.Color, x, y float64, isS
 	}
 }
 
+//go:noinline
 // drawRegularPiece draws a standard square piece.
 func drawRegularPiece(screen *ebiten.Image, pieceColor color.Color, x, y float64) {
 	accentColor, ok := config.AccentColors[pieceColor]
@@ -135,6 +141,7 @@ func drawRegularPiece(screen *ebiten.Image, pieceColor color.Color, x, y float64
 	screen.DrawImage(accentSquare, accentOp)
 }
 
+//go:noinline
 // drawSelectedPiece draws a circular selected piece.
 func drawSelectedPiece(screen *ebiten.Image, pieceColor color.Color, x, y float64) {
 	accentColor, ok := config.AccentColors[pieceColor]
@@ -152,7 +159,7 @@ func drawSelectedPiece(screen *ebiten.Image, pieceColor color.Color, x, y float6
 	vector.DrawFilledCircle(screen, cx, cy, accentR, accentColor, true)
 }
 
-
+//go:noinline
 func drawUI(screen *ebiten.Image, score int, moveCount int) {
 	// Draw move counter
 	moveCountStr := fmt.Sprintf("Moves: %d", moveCount)
