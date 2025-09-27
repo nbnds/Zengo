@@ -3,7 +3,6 @@ package audio
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2/audio"
@@ -17,24 +16,19 @@ const (
 
 // Manager holds all audio-related state.
 type Manager struct {
-	audioContext          *audio.Context
-	moveSoundData         []byte // Raw bytes of the .wav file
-	moveSoundLength       int64  // Length of the decoded PCM stream in bytes
+	audioContext              *audio.Context
+	moveSoundData             []byte // Raw bytes of the .wav file
+	moveSoundLength           int64  // Length of the decoded PCM stream in bytes
 	moveSoundNativeSampleRate int    // Sample rate of the original .wav file
 }
 
 // NewManager creates a new audio manager and loads sounds.
-func NewManager() *Manager {
+func NewManager(moveSoundData []byte) *Manager {
 	m := &Manager{}
 	// The audio context dictates the final output sample rate.
 	m.audioContext = audio.NewContext(contextSampleRate)
 
-	var err error
-	// Load the entire .wav file into memory.
-	m.moveSoundData, err = ioutil.ReadFile("assets/move.wav")
-	if err != nil {
-		log.Fatalf("audio: failed to read move sound file: %v", err)
-	}
+	m.moveSoundData = moveSoundData
 
 	// Decode the sound once (without resampling) to get its original properties.
 	s, err := wav.DecodeWithoutResampling(bytes.NewReader(m.moveSoundData))

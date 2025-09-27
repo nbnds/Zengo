@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"log"
 	"zenmojo/audio"
 	"zenmojo/config"
@@ -9,6 +10,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+//go:embed assets/move.wav
+var moveSoundFile []byte
+
 func main() {
 	// Set window properties from the config package
 	ebiten.SetWindowIcon(config.Icons)
@@ -16,7 +20,7 @@ func main() {
 	ebiten.SetWindowTitle("Zesty Zen")
 
 	// Create a new audio manager
-	audioManager := audio.NewManager()
+	audioManager := audio.NewManager(moveSoundFile)
 
 	// Create and run the game
 	game := game.NewGame(audioManager)
