@@ -102,40 +102,54 @@ func drawPiece(screen *ebiten.Image, b *board.Board, i, j, mouseX, mouseY int) {
 	drawPieceAt(screen, color, drawX, drawY, isSelected)
 }
 
-// drawPieceAt draws a single piece with a given color at a specific screen coordinate.
+// drawPieceAt dispatches drawing to specialized functions based on selection state.
 func drawPieceAt(screen *ebiten.Image, pieceColor color.Color, x, y float64, isSelected bool) {
 	if pieceColor == nil {
 		return // Don't draw empty cells
 	}
+	if isSelected {
+		drawSelectedPiece(screen, pieceColor, x, y)
+	} else {
+		drawRegularPiece(screen, pieceColor, x, y)
+	}
+}
 
+// drawRegularPiece draws a standard square piece.
+func drawRegularPiece(screen *ebiten.Image, pieceColor color.Color, x, y float64) {
 	accentColor, ok := config.AccentColors[pieceColor]
 	if !ok {
 		accentColor = config.White // Default to white
 	}
 
-	if isSelected {
-		shadowOffset := 2
-		cx := float32(x + float64(config.SquareSize)/2)
-		cy := float32(y + float64(config.SquareSize)/2)
-		r := float32(config.SquareSize / 2)
-		vector.DrawFilledCircle(screen, cx+float32(shadowOffset), cy+float32(shadowOffset), r, config.ShadowColor, true)
-		vector.DrawFilledCircle(screen, cx, cy, r, pieceColor, true)
-		accentR := float32(config.SquareSize / 8)
-		vector.DrawFilledCircle(screen, cx, cy, accentR, accentColor, true)
-	} else {
-		square := ebiten.NewImage(config.SquareSize, config.SquareSize)
-		square.Fill(pieceColor)
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(x, y)
-		screen.DrawImage(square, op)
+	square := ebiten.NewImage(config.SquareSize, config.SquareSize)
+	square.Fill(pieceColor)
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(x, y)
+	screen.DrawImage(square, op)
 
-		accentSize := config.SquareSize / 4
-		accentSquare := ebiten.NewImage(accentSize, accentSize)
-		accentSquare.Fill(accentColor)
-		accentOp := &ebiten.DrawImageOptions{}
-		accentOp.GeoM.Translate(x+float64(config.SquareSize)/8, y+float64(config.SquareSize)/8)
-		screen.DrawImage(accentSquare, accentOp)
+	accentSize := config.SquareSize / 4
+	accentSquare := ebiten.NewImage(accentSize, accentSize)
+	accentSquare.Fill(accentColor)
+	accentOp := &ebiten.DrawImageOptions{}
+	accentOp.GeoM.Translate(x+float64(config.SquareSize)/8, y+float64(config.SquareSize)/8)
+	screen.DrawImage(accentSquare, accentOp)
+}
+
+// drawSelectedPiece draws a circular selected piece.
+func drawSelectedPiece(screen *ebiten.Image, pieceColor color.Color, x, y float64) {
+	accentColor, ok := config.AccentColors[pieceColor]
+	if !ok {
+		accentColor = config.White // Default to white
 	}
+
+	shadowOffset := 2
+	cx := float32(x + float64(config.SquareSize)/2)
+	cy := float32(y + float64(config.SquareSize)/2)
+	r := float32(config.SquareSize / 2)
+	vector.DrawFilledCircle(screen, cx+float32(shadowOffset), cy+float32(shadowOffset), r, config.ShadowColor, true)
+	vector.DrawFilledCircle(screen, cx, cy, r, pieceColor, true)
+	accentR := float32(config.SquareSize / 8)
+	vector.DrawFilledCircle(screen, cx, cy, accentR, accentColor, true)
 }
 
 
