@@ -42,7 +42,7 @@ var (
 	Cyan       = color.RGBA{R: 50, G: 173, B: 230, A: 255}
 	Magenta    = color.RGBA{R: 255, G: 45, B: 85, A: 255}
 	Lime       = color.RGBA{R: 204, G: 255, B: 0, A: 255}
-	Teal       = color.RGBA{R: 90, G: 200, B: 250, A: 255}
+	Teal       = color.RGBA{R: 86, G: 143, B: 135, A: 255}
 	Brown      = color.RGBA{R: 162, G: 132, B: 94, A: 255}
 	Pink       = color.RGBA{R: 255, G: 105, B: 180, A: 255}
 	Gold       = color.RGBA{R: 255, G: 215, B: 0, A: 255}
