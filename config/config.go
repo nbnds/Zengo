@@ -14,7 +14,7 @@ import (
 
 const (
 	ScreenWidth           = 600
-	ScreenHeight          = 1000
+	ScreenHeight          = 980
 	GridSize              = 10
 	SquareSize            = 48
 	Gap                   = 8

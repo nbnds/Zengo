@@ -17,7 +17,7 @@ func main() {
 	// Set window properties from the config package
 	ebiten.SetWindowIcon(config.Icons)
 	ebiten.SetWindowSize(config.ScreenWidth, config.ScreenHeight)
-	ebiten.SetWindowTitle("Zesty Zen")
+	ebiten.SetWindowTitle("Zengo")
 
 	// Create a new audio manager
 	audioManager := audio.NewManager(moveSoundFile)
