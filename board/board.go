@@ -30,13 +30,54 @@ func New() *Board {
 		grid:      make([][]color.Color, config.GridSize),
 	}
 
-	// Create a slice of 100 colors with a balanced distribution from the palette.
-	colors := make([]color.Color, 0, config.GridSize*config.GridSize)
-	for i := 0; i < config.GridSize*config.GridSize; i++ {
-		colors = append(colors, config.Palette[i%len(config.Palette)])
+	// --- New distribution logic for varied group sizes ---
+	totalTiles := config.GridSize * config.GridSize
+	minGroupSize := 2
+	maxGroupSize := 10
+
+	colors := make([]color.Color, 0, totalTiles)
+	remainingTiles := totalTiles
+
+	// Create a temporary, mutable copy of the palette to ensure each color is used at most once.
+	availableColors := make([]color.Color, len(config.Palette))
+	copy(availableColors, config.Palette)
+	rand.Shuffle(len(availableColors), func(i, j int) {
+		availableColors[i], availableColors[j] = availableColors[j], availableColors[i]
+	})
+
+	// Create groups of random sizes
+	for remainingTiles > 0 {
+		// Determine a random size for the next group
+		size := rand.Intn(maxGroupSize-minGroupSize+1) + minGroupSize
+
+		// If we've run out of unique colors, stop creating new groups.
+		// The last group will take all remaining tiles.
+		// Ensure the last group doesn't leave a single tile
+		if remainingTiles-size == 1 {
+			size = remainingTiles / 2 // Split the remainder
+		}
+		if remainingTiles-size < 0 {
+			size = remainingTiles // Last group takes all remaining tiles
+		}
+		if len(availableColors) == 0 {
+			size = remainingTiles
+		}
+
+		// Assign a unique color to this group and remove it from the available pool.
+		// If no unique colors are left, reuse the last available color for the final group.
+		groupColor := availableColors[0]
+		if len(availableColors) > 1 {
+			availableColors = availableColors[1:]
+		}
+		for i := 0; i < size; i++ {
+			colors = append(colors, groupColor)
+		}
+
+		remainingTiles -= size
 	}
 
 	// Shuffle the colors to create a random board.
+	// This ensures that the generated groups are scattered across the grid.
 	rand.Shuffle(len(colors), func(i, j int) {
 		colors[i], colors[j] = colors[j], colors[i]
 	})
@@ -139,5 +180,3 @@ func (b *Board) UpdateAnimation() (animationFinished bool) {
 	}
 	return false
 }
-
-
