@@ -1,6 +1,6 @@
 # Zengo
 
-![Zengo Gameplay](docs/screenshot.png)
+![Zengo Gameplay](docs/Screenshot.png)
 
 `Zengo` is a minimalist and relaxing puzzle game about arranging colored tiles into solid groups. Find the optimal arrangement to achieve the maximum score and fill the progress bar. Each game is procedurally generated, offering a new, unique challenge.
 
@@ -43,4 +43,4 @@ go build -ldflags="-H windowsgui" -o Zengo.exe .
 ## Technology
 
 *   **Engine**: Ebitengine https://ebitengine.org/ | https://github.com/hajimehoshi/ebiten
-*   **Sprache**: Go https://go.dev/ | https://github.com/golang
+*   **Language**: Go https://go.dev/ | https://github.com/golang
