@@ -18,6 +18,7 @@ type Game struct {
 	mouseY       int
 	moveCount    int
 	score        int
+	maxScore     int
 	audioManager *audio.Manager
 }
 
@@ -28,6 +29,7 @@ func NewGame(audioManager *audio.Manager) *Game {
 		board:        b,
 		moveCount:    0,
 		score:        scoring.CalculateScore(b.Grid(), scoring.StandardRuleSet{}), // Calculate initial score
+		maxScore:     scoring.CalculateMaxPossibleScore(b.Grid()),
 		audioManager: audioManager,
 	}
 	return g
@@ -53,7 +55,7 @@ func (g *Game) Update() error {
 
 // Draw renders the game screen by delegating to the view package.
 func (g *Game) Draw(screen *ebiten.Image) {
-	view.Draw(screen, g.board, g.score, g.moveCount, g.mouseX, g.mouseY)
+	view.Draw(screen, g.board, g.score, g.maxScore, g.moveCount, g.mouseX, g.mouseY)
 }
 
 // Layout returns the configured screen dimensions.

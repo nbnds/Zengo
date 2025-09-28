@@ -157,3 +157,47 @@ func totalColorItems(color color.Color, grid [][]color.Color) int {
 	}
 	return count
 }
+
+// CalculateMaxPossibleScore determines the theoretical maximum score for a given board layout.
+// It does this by counting the items of each color and calculating the score for the
+// most optimal shape (the most "square-like" rectangle) that can be formed with that number of items.
+func CalculateMaxPossibleScore(grid [][]color.Color) int {
+	colorCounts := make(map[color.Color]int)
+	for r := range grid {
+		for c := range grid[r] {
+			if grid[r][c] != nil {
+				colorCounts[grid[r][c]]++
+			}
+		}
+	}
+
+	totalMaxScore := 0
+	for _, numItems := range colorCounts {
+		if numItems < 2 {
+			continue
+		}
+
+		bestScoreForColor := 0
+		// Find all factors to determine possible rectangle shapes
+		for w := 1; w*w <= numItems; w++ {
+			if numItems%w == 0 {
+				h := numItems / w
+				var score int
+				// Apply the correct scoring rule based on the shape.
+				if w == 1 || h == 1 {
+					// For a line shape, the score is just the number of items.
+					score = numItems
+				} else {
+					// For a solid rectangle, the score is items * width * height.
+					score = numItems * w * h
+				}
+
+				if score > bestScoreForColor {
+					bestScoreForColor = score
+				}
+			}
+		}
+		totalMaxScore += bestScoreForColor
+	}
+	return totalMaxScore
+}

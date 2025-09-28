@@ -14,10 +14,10 @@ import (
 // Draw renders the entire game screen.
 //
 //go:noinline
-func Draw(screen *ebiten.Image, b *board.Board, score int, moveCount int, mouseX int, mouseY int) {
+func Draw(screen *ebiten.Image, b *board.Board, score, maxScore, moveCount, mouseX, mouseY int) {
 	drawBackground(screen)
 	drawBoard(screen, b, mouseX, mouseY)
-	drawUI(screen, score, moveCount)
+	drawUI(screen, score, maxScore, moveCount)
 }
 
 //go:noinline
@@ -165,17 +165,42 @@ func drawSelectedPiece(screen *ebiten.Image, pieceColor color.Color, x, y float6
 }
 
 //go:noinline
-func drawUI(screen *ebiten.Image, score int, moveCount int) {
+func drawUI(screen *ebiten.Image, score, maxScore, moveCount int) {
 	uiTopMargin := 40
 	uiSideMargin := 20
 
 	// Draw move counter on the top left
 	moveCountStr := fmt.Sprintf("Moves: %d", moveCount)
-	text.Draw(screen, moveCountStr, config.MTextFace, uiSideMargin, uiTopMargin, color.Black)
+	text.Draw(screen, moveCountStr, config.MTextFace, uiSideMargin, uiTopMargin, config.Black)
 
-	// Draw score on the top right
-	scoreStr := fmt.Sprintf("Score: %d", score)
-	scoreBounds := text.BoundString(config.MTextFace, scoreStr)
-	scoreX := config.ScreenWidth - scoreBounds.Dx() - uiSideMargin
-	text.Draw(screen, scoreStr, config.MTextFace, scoreX, uiTopMargin, color.Black)
+	// --- Draw Score Progress Bar on the top right ---
+
+	// Define bar dimensions and position
+	barWidth := 200
+	barHeight := 20
+	barX := config.ScreenWidth - barWidth - uiSideMargin
+	barY := uiTopMargin - barHeight/2 // Align vertically with "Moves" text
+
+	// Calculate progress
+	progress := 0.0
+	if maxScore > 0 {
+		progress = float64(score) / float64(maxScore)
+	}
+	if progress > 1.0 { // Cap progress at 100%
+		progress = 1.0
+	}
+
+	// Draw bar background
+	vector.DrawFilledRect(screen, float32(barX), float32(barY), float32(barWidth), float32(barHeight), config.LightGrey, false)
+
+	// Draw filled portion of the bar
+	fillWidth := float32(float64(barWidth) * progress)
+	vector.DrawFilledRect(screen, float32(barX), float32(barY), fillWidth, float32(barHeight), config.Green, false)
+
+	// Draw progress text (e.g., "123 / 456") over the bar
+	progressStr := fmt.Sprintf("%d / %d", score, maxScore)
+	textBounds := text.BoundString(config.MTextFace, progressStr)
+	textX := barX + (barWidth-textBounds.Dx())/2
+	textY := barY + (barHeight+textBounds.Dy())/2 - 4 // Adjust for vertical centering
+	text.Draw(screen, progressStr, config.MTextFace, textX, textY, config.White)
 }
