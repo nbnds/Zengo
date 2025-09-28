@@ -1,6 +1,7 @@
 # Zengo
 <p align="middle">
-<img src="docs/screenshot_a.png" width="40%" style="margin-right: 10%">
+<img src="docs/screenshot_a.png" width="40%" >
+&nbsp; &nbsp; &nbsp; &nbsp;
 <img src="docs/screenshot_b.png" width="40%" >
 </p>
 
