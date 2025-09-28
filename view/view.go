@@ -10,6 +10,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/hajimehoshi/ebiten/v2/vector"
+	"golang.org/x/image/font"
 )
 
 // Draw renders the entire game screen.
@@ -189,15 +190,18 @@ func drawUI(screen *ebiten.Image, score, maxScore, moveCount int, scoreHistory [
 
 	// Current Score (Center-Left)
 	scoreStr := fmt.Sprintf("Score: %d", score)
-	scoreBounds := text.BoundString(config.STextFace, scoreStr)
-	scoreY := (graphHeight-scoreBounds.Dy())/2 + scoreBounds.Dy()
+	scoreBounds, _ := font.BoundString(config.STextFace, scoreStr)
+	scoreH := (scoreBounds.Max.Y - scoreBounds.Min.Y).Ceil()
+	scoreY := (graphHeight-scoreH)/2 + scoreH
 	text.Draw(screen, scoreStr, config.STextFace, uiSideMargin, scoreY, config.Black)
 
 	// Move Counter (Bottom-Right)
 	moveCountStr := fmt.Sprintf("Moves: %d", moveCount)
-	moveBounds := text.BoundString(config.STextFace, moveCountStr)
-	moveX := graphWidth - moveBounds.Dx() - uiSideMargin
-	moveY := graphHeight - moveBounds.Dy()
+	moveBounds, _ := font.BoundString(config.STextFace, moveCountStr)
+	moveW := (moveBounds.Max.X - moveBounds.Min.X).Ceil()
+	moveH := (moveBounds.Max.Y - moveBounds.Min.Y).Ceil()
+	moveX := graphWidth - moveW - uiSideMargin
+	moveY := graphHeight - moveH
 	text.Draw(screen, moveCountStr, config.STextFace, moveX, moveY, config.Black)
 }
 
@@ -342,10 +346,11 @@ func drawStoneDistribution(screen *ebiten.Image, counts map[color.Color]int) {
 
 		// Draw the count text
 		countStr := fmt.Sprintf("%d", item.Count)
-		textBounds := text.BoundString(config.MTextFace, countStr)
+		textBounds, _ := font.BoundString(config.MTextFace, countStr)
+		textH := (textBounds.Max.Y - textBounds.Min.Y).Ceil()
 		textX := x + miniatureSize + textMarginLeft
 		// Vertically center the text next to the miniature
-		textY := y + (miniatureSize-textBounds.Dy())/2 + textBounds.Dy() - 2
+		textY := y + (miniatureSize-textH)/2 + textH - 2
 
 		text.Draw(screen, countStr, config.MTextFace, textX, textY, config.Black)
 	}
