@@ -90,6 +90,7 @@ var (
 	HatchingPattern *ebiten.Image
 
 	MTextFace font.Face
+	STextFace font.Face // Smaller font for UI annotations
 
 	Icons []image.Image
 )
@@ -122,6 +123,16 @@ func init() {
 		log.Fatal(err)
 	}
 	MTextFace = baseFace
+
+	smallFace, err := opentype.NewFace(ttf, &opentype.FaceOptions{
+		Size:    16, // Smaller font size
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	STextFace = smallFace
 
 	// Create window icons
 	Icons = []image.Image{createRainbowIcon(16), createRainbowIcon(32), createRainbowIcon(48)}

@@ -19,6 +19,7 @@ type Game struct {
 	moveCount    int
 	score        int
 	maxScore     int
+	scoreHistory []int
 	audioManager *audio.Manager
 }
 
@@ -26,10 +27,12 @@ type Game struct {
 func NewGame(audioManager *audio.Manager) *Game {
 	b := board.New()
 	g := &Game{
-		board:        b,
-		moveCount:    0,
-		score:        scoring.CalculateScore(b.Grid(), scoring.StandardRuleSet{}), // Calculate initial score
-		maxScore:     scoring.CalculateMaxPossibleScore(b.Grid()),
+		board:     b,
+		moveCount: 0,
+		score:     scoring.CalculateScore(b.Grid(), scoring.StandardRuleSet{}), // Calculate initial score
+		maxScore:  scoring.CalculateMaxPossibleScore(b.Grid()),
+		// Initialize score history with the score at move 0
+		scoreHistory: []int{scoring.CalculateScore(b.Grid(), scoring.StandardRuleSet{})},
 		audioManager: audioManager,
 	}
 	return g
@@ -40,7 +43,9 @@ func (g *Game) Update() error {
 	g.mouseX, g.mouseY = ebiten.CursorPosition()
 
 	if animationFinished := g.board.UpdateAnimation(); animationFinished {
-		g.score = scoring.CalculateScore(g.board.Grid(), scoring.StandardRuleSet{})
+		newScore := scoring.CalculateScore(g.board.Grid(), scoring.StandardRuleSet{})
+		g.score = newScore
+		g.scoreHistory = append(g.scoreHistory, newScore)
 	}
 
 	if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
@@ -56,7 +61,7 @@ func (g *Game) Update() error {
 // Draw renders the game screen by delegating to the view package.
 func (g *Game) Draw(screen *ebiten.Image) {
 	colorCounts := scoring.CountColors(g.board.Grid())
-	view.Draw(screen, g.board, g.score, g.maxScore, g.moveCount, colorCounts, g.mouseX, g.mouseY)
+	view.Draw(screen, g.board, g.score, g.maxScore, g.moveCount, g.scoreHistory, colorCounts, g.mouseX, g.mouseY)
 }
 
 // Layout returns the configured screen dimensions.

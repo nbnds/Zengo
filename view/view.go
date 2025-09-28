@@ -15,10 +15,10 @@ import (
 // Draw renders the entire game screen.
 //
 //go:noinline
-func Draw(screen *ebiten.Image, b *board.Board, score, maxScore, moveCount int, colorCounts map[color.Color]int, mouseX, mouseY int) {
+func Draw(screen *ebiten.Image, b *board.Board, score, maxScore, moveCount int, scoreHistory []int, colorCounts map[color.Color]int, mouseX, mouseY int) {
 	drawBackground(screen)
 	drawBoard(screen, b, mouseX, mouseY)
-	drawUI(screen, score, maxScore, moveCount)
+	drawUI(screen, score, maxScore, moveCount, scoreHistory)
 	drawStoneDistribution(screen, colorCounts)
 }
 
@@ -167,44 +167,108 @@ func drawSelectedPiece(screen *ebiten.Image, pieceColor color.Color, x, y float6
 }
 
 //go:noinline
-func drawUI(screen *ebiten.Image, score, maxScore, moveCount int) {
-	uiTopMargin := 40
+func drawUI(screen *ebiten.Image, score, maxScore, moveCount int, scoreHistory []int) {
+	// Define a gap between the UI and the board
+	uiBottomMargin := 20
+	// The UI area is the space above the grid, minus the margin.
+	graphX := 0
+	graphY := 0
+	graphWidth := config.ScreenWidth
+	graphHeight := config.GridOriginY - uiBottomMargin
+
+	// Draw the score graph as the background for the entire top UI area.
+	drawScoreGraph(screen, scoreHistory, maxScore, graphX, graphY, graphWidth, graphHeight)
+
+	// --- Draw text overlays on top of the graph ---
 	uiSideMargin := 20
+	uiTopMargin := 20
 
-	// Draw move counter on the top left
+	// Max Score (Top-Left)
+	maxScoreStr := fmt.Sprintf("Max: %d", maxScore)
+	text.Draw(screen, maxScoreStr, config.STextFace, uiSideMargin, uiTopMargin, config.Black)
+
+	// Current Score (Center-Left)
+	scoreStr := fmt.Sprintf("Score: %d", score)
+	scoreBounds := text.BoundString(config.STextFace, scoreStr)
+	scoreY := (graphHeight-scoreBounds.Dy())/2 + scoreBounds.Dy()
+	text.Draw(screen, scoreStr, config.STextFace, uiSideMargin, scoreY, config.Black)
+
+	// Move Counter (Bottom-Right)
 	moveCountStr := fmt.Sprintf("Moves: %d", moveCount)
-	text.Draw(screen, moveCountStr, config.MTextFace, uiSideMargin, uiTopMargin, config.Black)
+	moveBounds := text.BoundString(config.STextFace, moveCountStr)
+	moveX := graphWidth - moveBounds.Dx() - uiSideMargin
+	moveY := graphHeight - moveBounds.Dy()
+	text.Draw(screen, moveCountStr, config.STextFace, moveX, moveY, config.Black)
+}
 
-	// --- Draw Score Progress Bar on the top right ---
+//go:noinline
+func drawScoreGraph(screen *ebiten.Image, history []int, maxScore, x, y, width, height int) {
+	// Draw graph background/border
+	vector.DrawFilledRect(screen, float32(x), float32(y), float32(width), float32(height), config.LightGrey, false)
 
-	// Define bar dimensions and position
-	barWidth := 200
-	barHeight := 20
-	barX := config.ScreenWidth - barWidth - uiSideMargin
-	barY := uiTopMargin - barHeight/2 // Align vertically with "Moves" text
-
-	// Calculate progress
-	progress := 0.0
-	if maxScore > 0 {
-		progress = float64(score) / float64(maxScore)
-	}
-	if progress > 1.0 { // Cap progress at 100%
-		progress = 1.0
+	if len(history) < 2 {
+		return // Not enough data to draw a line
 	}
 
-	// Draw bar background
-	vector.DrawFilledRect(screen, float32(barX), float32(barY), float32(barWidth), float32(barHeight), config.LightGrey, false)
+	// Determine the Y-axis scale. Use max possible score to prevent the scale from jumping around.
+	// If the current score exceeds the theoretical max (e.g., due to future scoring changes), adjust.
+	yMax := float32(maxScore)
+	currentMax := 0
+	for _, s := range history {
+		if s > currentMax {
+			currentMax = s
+		}
+	}
+	if float32(currentMax) > yMax {
+		yMax = float32(currentMax)
+	}
+	if yMax == 0 {
+		yMax = 1 // Avoid division by zero
+	}
 
-	// Draw filled portion of the bar
-	fillWidth := float32(float64(barWidth) * progress)
-	vector.DrawFilledRect(screen, float32(barX), float32(barY), fillWidth, float32(barHeight), config.Green, false)
+	// Determine the X-axis scale. The graph will show up to a certain number of recent moves,
+	// but we will scale the drawing to fit the full width.
+	maxVisibleMoves := width // Show up to `width` moves on the graph
+	historyLen := len(history)
+	startIdx := 0
+	if historyLen > maxVisibleMoves {
+		startIdx = historyLen - maxVisibleMoves
+	}
+	visibleHistory := history[startIdx:]
+	numVisiblePoints := len(visibleHistory)
 
-	// Draw progress text (e.g., "123 / 456") over the bar
-	progressStr := fmt.Sprintf("%d / %d", score, maxScore)
-	textBounds := text.BoundString(config.MTextFace, progressStr)
-	textX := barX + (barWidth-textBounds.Dx())/2
-	textY := barY + (barHeight+textBounds.Dy())/2 - 4 // Adjust for vertical centering
-	text.Draw(screen, progressStr, config.MTextFace, textX, textY, config.White)
+	// Keep track of the last point where the score was not zero, for connecting lines.
+	lastY := float32(y + height) // Start at the baseline
+	lastX := float32(x)
+
+	// Draw the line segments
+	for i := 0; i < numVisiblePoints; i++ {
+		currentScore := float32(visibleHistory[i])
+		previousScore := float32(0)
+		if i > 0 {
+			previousScore = float32(visibleHistory[i-1])
+		}
+
+		// The current X position is based on the index in the visible history. 1 move = 1 pixel.
+		currentX := float32(x + i)
+		currentY := float32(y+height) - (currentScore/yMax)*float32(height)
+
+		if currentScore > previousScore {
+			// Score increased: draw a green line from the last point to the current one.
+			vector.StrokeLine(screen, lastX, lastY, currentX, currentY, 2, config.Green, true)
+		} else if currentScore < previousScore {
+			// Score decreased: draw a red line from the last point to the current one.
+			vector.StrokeLine(screen, lastX, lastY, currentX, currentY, 2, config.Red, true)
+		} else if i > 0 { // Only draw dots for moves after the first one.
+			// Score is unchanged: draw a subtle grey line segment.
+			// This creates a continuous horizontal line.
+			vector.StrokeLine(screen, lastX, lastY, currentX, lastY, 1, config.Grey, true)
+		}
+
+		// Update the last position for the next iteration's line segment.
+		lastX = currentX
+		lastY = currentY
+	}
 }
 
 //go:noinline
