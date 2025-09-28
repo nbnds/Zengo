@@ -1,9 +1,8 @@
 # Zengo
 <p align="middle">
-<img src="docs/screenshot_b.png" width="40%">
-<img src="docs/screenshot_a.png" width="40%" style="float: left; margin-right: 10px;">
+<img src="docs/screenshot_a.png" width="40%" style="margin-right: 10%">
+<img src="docs/screenshot_b.png" width="40%" >
 </p>
-<br clear="all">
 
 `Zengo` is a minimalist and relaxing puzzle game about arranging colored tiles into solid groups. Find the optimal arrangement to achieve the maximum score and fill the progress bar. Each game is procedurally generated, offering a new, unique challenge.
 
