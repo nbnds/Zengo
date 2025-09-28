@@ -169,40 +169,43 @@ func drawSelectedPiece(screen *ebiten.Image, pieceColor color.Color, x, y float6
 
 //go:noinline
 func drawUI(screen *ebiten.Image, score, maxScore, moveCount int, scoreHistory []int) {
-	// Define a gap between the UI and the board
-	uiBottomMargin := 20
-	// The UI area is the space above the grid, minus the margin.
-	graphX := 0
-	graphY := 0
-	graphWidth := config.ScreenWidth
-	graphHeight := config.GridOriginY - uiBottomMargin
-
-	// Draw the score graph as the background for the entire top UI area.
-	drawScoreGraph(screen, scoreHistory, maxScore, graphX, graphY, graphWidth, graphHeight)
-
-	// --- Draw text overlays on top of the graph ---
+	// The UI area is the space above the grid. We'll have a status bar and a graph area.
+	const statusBarHeight = 30 // Height for the text labels at the top.
 	uiSideMargin := 20
-	uiTopMargin := 20
+
+	// --- Draw text labels at the very top of the screen ---
+
+	// Calculate the Y position to center the text line within the status bar area.
+	// We get the text height once and use it for all labels.
+	textBounds, _ := font.BoundString(config.STextFace, "M") // Get height of a sample character
+	textH := (textBounds.Max.Y - textBounds.Min.Y).Ceil()
+	textY := (statusBarHeight-textH)/2 + textH
 
 	// Max Score (Top-Left)
 	maxScoreStr := fmt.Sprintf("Max: %d", maxScore)
-	text.Draw(screen, maxScoreStr, config.STextFace, uiSideMargin, uiTopMargin, config.Black)
+	text.Draw(screen, maxScoreStr, config.STextFace, uiSideMargin, textY, config.Black)
 
 	// Current Score (Center-Left)
 	scoreStr := fmt.Sprintf("Score: %d", score)
 	scoreBounds, _ := font.BoundString(config.STextFace, scoreStr)
-	scoreH := (scoreBounds.Max.Y - scoreBounds.Min.Y).Ceil()
-	scoreY := (graphHeight-scoreH)/2 + scoreH
-	text.Draw(screen, scoreStr, config.STextFace, uiSideMargin, scoreY, config.Black)
+	scoreW := (scoreBounds.Max.X - scoreBounds.Min.X).Ceil()
+	scoreX := (config.ScreenWidth - scoreW) / 2
+	text.Draw(screen, scoreStr, config.STextFace, scoreX, textY, config.Black)
 
 	// Move Counter (Bottom-Right)
 	moveCountStr := fmt.Sprintf("Moves: %d", moveCount)
 	moveBounds, _ := font.BoundString(config.STextFace, moveCountStr)
 	moveW := (moveBounds.Max.X - moveBounds.Min.X).Ceil()
-	moveH := (moveBounds.Max.Y - moveBounds.Min.Y).Ceil()
-	moveX := graphWidth - moveW - uiSideMargin
-	moveY := graphHeight - moveH
-	text.Draw(screen, moveCountStr, config.STextFace, moveX, moveY, config.Black)
+	moveX := config.ScreenWidth - moveW - uiSideMargin
+	text.Draw(screen, moveCountStr, config.STextFace, moveX, textY, config.Black)
+
+	// --- Draw the score graph below the status bar ---
+	graphX := 0
+	graphY := statusBarHeight
+	graphWidth := config.ScreenWidth
+	const graphBottomMargin = 20 // Space between graph and board
+	graphHeight := config.GridOriginY - statusBarHeight - graphBottomMargin
+	drawScoreGraph(screen, scoreHistory, maxScore, graphX, graphY, graphWidth, graphHeight)
 }
 
 //go:noinline
@@ -306,21 +309,20 @@ func drawStoneDistribution(screen *ebiten.Image, counts map[color.Color]int) {
 	})
 
 	// --- Drawing constants ---
-	startY := config.GridOriginY + config.GridHeight + 40 // Start below the grid
+	// Define the area below the board for the miniatures.
+	areaTopY := config.GridOriginY + config.GridHeight
+	areaBottomY := config.ScreenHeight
+	areaHeight := areaBottomY - areaTopY
+
 	miniatureSize := 24
 	itemHeight := 30
 	textMarginLeft := 10
 	numColumns := 4
 	itemWidth := 80 // Width for one "icon + text" block
 
-	// Calculate total block dimensions to center it
-	numRows := (len(sortedCounts) + numColumns - 1) / numColumns
-	totalHeight := numRows * itemHeight
-	totalWidth := numColumns * itemWidth
-
-	// Calculate starting positions for the entire block
-	blockStartY := startY + ((config.ScreenHeight - startY - totalHeight) / 2)
-	blockStartX := (config.ScreenWidth - totalWidth) / 2
+	// Center the block of miniatures both horizontally and vertically in the space below the board.
+	blockStartX := (config.ScreenWidth - (numColumns * itemWidth)) / 2
+	blockStartY := areaTopY + (areaHeight-((len(sortedCounts)+numColumns-1)/numColumns*itemHeight))/2
 
 	for i, item := range sortedCounts {
 		col := i % numColumns
