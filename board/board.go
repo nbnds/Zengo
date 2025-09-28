@@ -60,7 +60,13 @@ func New() *Board {
 			size = remainingTiles // Last group takes all remaining tiles
 		}
 		if len(availableColors) == 0 {
-			size = remainingTiles
+			// If we are out of colors, distribute the rest among the last color,
+			// but respect maxGroupSize.
+			if remainingTiles > maxGroupSize {
+				size = maxGroupSize
+			} else {
+				size = remainingTiles
+			}
 		}
 
 		// Assign a unique color to this group and remove it from the available pool.

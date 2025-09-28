@@ -55,7 +55,8 @@ func (g *Game) Update() error {
 
 // Draw renders the game screen by delegating to the view package.
 func (g *Game) Draw(screen *ebiten.Image) {
-	view.Draw(screen, g.board, g.score, g.maxScore, g.moveCount, g.mouseX, g.mouseY)
+	colorCounts := scoring.CountColors(g.board.Grid())
+	view.Draw(screen, g.board, g.score, g.maxScore, g.moveCount, colorCounts, g.mouseX, g.mouseY)
 }
 
 // Layout returns the configured screen dimensions.

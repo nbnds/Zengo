@@ -201,3 +201,16 @@ func CalculateMaxPossibleScore(grid [][]color.Color) int {
 	}
 	return totalMaxScore
 }
+
+// CountColors counts the number of tiles for each color on the grid.
+func CountColors(grid [][]color.Color) map[color.Color]int {
+	colorCounts := make(map[color.Color]int)
+	for r := range grid {
+		for c := range grid[r] {
+			if grid[r][c] != nil {
+				colorCounts[grid[r][c]]++
+			}
+		}
+	}
+	return colorCounts
+}

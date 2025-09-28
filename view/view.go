@@ -3,6 +3,7 @@ package view
 import (
 	"fmt"
 	"image/color"
+	"sort"
 	"zenmojo/board"
 	"zenmojo/config"
 
@@ -14,10 +15,11 @@ import (
 // Draw renders the entire game screen.
 //
 //go:noinline
-func Draw(screen *ebiten.Image, b *board.Board, score, maxScore, moveCount, mouseX, mouseY int) {
+func Draw(screen *ebiten.Image, b *board.Board, score, maxScore, moveCount int, colorCounts map[color.Color]int, mouseX, mouseY int) {
 	drawBackground(screen)
 	drawBoard(screen, b, mouseX, mouseY)
 	drawUI(screen, score, maxScore, moveCount)
+	drawStoneDistribution(screen, colorCounts)
 }
 
 //go:noinline
@@ -203,4 +205,84 @@ func drawUI(screen *ebiten.Image, score, maxScore, moveCount int) {
 	textX := barX + (barWidth-textBounds.Dx())/2
 	textY := barY + (barHeight+textBounds.Dy())/2 - 4 // Adjust for vertical centering
 	text.Draw(screen, progressStr, config.MTextFace, textX, textY, config.White)
+}
+
+//go:noinline
+func drawStoneDistribution(screen *ebiten.Image, counts map[color.Color]int) {
+	// A struct to hold color and count for sorting
+	type colorCount struct {
+		Color color.Color
+		Count int
+	}
+
+	// Helper function to convert a color to a comparable string for stable sorting
+	colorToString := func(c color.Color) string {
+		r, g, b, a := c.RGBA()
+		// Use a format that ensures lexicographical sorting matches color value sorting
+		return fmt.Sprintf("%05d-%05d-%05d-%05d", r, g, b, a)
+	}
+
+	// Convert map to a slice for stable, sorted display
+	var sortedCounts []colorCount
+	for c, n := range counts {
+		sortedCounts = append(sortedCounts, colorCount{Color: c, Count: n})
+	}
+
+	// Sort by count (descending), then by color (ascending) for a stable order.
+	// This prevents flickering when counts are equal.
+	sort.Slice(sortedCounts, func(i, j int) bool {
+		if sortedCounts[i].Count != sortedCounts[j].Count {
+			return sortedCounts[i].Count > sortedCounts[j].Count
+		}
+		return colorToString(sortedCounts[i].Color) < colorToString(sortedCounts[j].Color)
+	})
+
+	// --- Drawing constants ---
+	startY := config.GridOriginY + config.GridHeight + 40 // Start below the grid
+	miniatureSize := 24
+	itemHeight := 30
+	textMarginLeft := 10
+	numColumns := 4
+	itemWidth := 80 // Width for one "icon + text" block
+
+	// Calculate total block dimensions to center it
+	numRows := (len(sortedCounts) + numColumns - 1) / numColumns
+	totalHeight := numRows * itemHeight
+	totalWidth := numColumns * itemWidth
+
+	// Calculate starting positions for the entire block
+	blockStartY := startY + ((config.ScreenHeight - startY - totalHeight) / 2)
+	blockStartX := (config.ScreenWidth - totalWidth) / 2
+
+	for i, item := range sortedCounts {
+		col := i % numColumns
+		row := i / numColumns
+
+		x := blockStartX + col*itemWidth
+		y := blockStartY + row*itemHeight
+
+		// Draw the color miniature
+		vector.DrawFilledRect(screen, float32(x), float32(y), float32(miniatureSize), float32(miniatureSize), item.Color, true)
+
+		// Draw the accent color on top of the miniature
+		accentColor, ok := config.AccentColors[item.Color]
+		if !ok {
+			accentColor = config.White // Default accent
+		}
+		accentSize := float32(miniatureSize / 4)
+		accentOffset := float32(miniatureSize / 8)
+		accentX := float32(x) + accentOffset
+		accentY := float32(y) + accentOffset
+
+		vector.DrawFilledRect(screen, accentX, accentY, accentSize, accentSize, accentColor, true)
+
+		// Draw the count text
+		countStr := fmt.Sprintf("%d", item.Count)
+		textBounds := text.BoundString(config.MTextFace, countStr)
+		textX := x + miniatureSize + textMarginLeft
+		// Vertically center the text next to the miniature
+		textY := y + (miniatureSize-textBounds.Dy())/2 + textBounds.Dy() - 2
+
+		text.Draw(screen, countStr, config.MTextFace, textX, textY, config.Black)
+	}
 }
