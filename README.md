@@ -44,3 +44,4 @@ go build -ldflags="-H windowsgui" -o Zengo.exe .
 
 *   **Engine**: Ebitengine https://ebitengine.org/ | https://github.com/hajimehoshi/ebiten
 *   **Language**: Go https://go.dev/ | https://github.com/golang
+*   **AI**: Gemini Code Assist | https://codeassist.google/
