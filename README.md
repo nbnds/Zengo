@@ -7,8 +7,8 @@
 ## How to Play
 
 *   **Goal**: Bring all tiles of the same color together into a single, contiguous group.
-*   **Controls**: Click on a tile to select it. Then click on an adjacent tile (horizontally or vertically) to swap them. Each swap costs one move.
-*   **Strategy**: Plan your moves ahead! The display below the game board shows you how many tiles of each color are on the board. Use this information to form the best possible shapes.
+*   **Controls**: Click on a tile to select it. Then click on an target tile to swap them. Each swap costs one move.
+*   **Strategy**: Plan your moves ahead!  The display below the game board shows you how many tiles of each color are on the board. At the beginning the arranging goes easy but later you may end up in a situation forcing you to rearrange whole groups, to reach the full score. Your strategies for allocating groups on the board will get better with each game you play.
 
 ## Scoring
 
