@@ -11,8 +11,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-//go:noinline
 // Draw renders the entire game screen.
+//
+//go:noinline
 func Draw(screen *ebiten.Image, b *board.Board, score int, moveCount int, mouseX int, mouseY int) {
 	drawBackground(screen)
 	drawBoard(screen, b, mouseX, mouseY)
@@ -79,8 +80,9 @@ func drawBoard(screen *ebiten.Image, b *board.Board, mouseX int, mouseY int) {
 	}
 }
 
-//go:noinline
 // drawPiece draws a single piece from the board at its grid position (i, j).
+//
+//go:noinline
 func drawPiece(screen *ebiten.Image, b *board.Board, i, j, mouseX, mouseY int) {
 	x := config.GridOriginX + i*(config.SquareSize+config.Gap)
 	y := config.GridOriginY + j*(config.SquareSize+config.Gap)
@@ -106,8 +108,9 @@ func drawPiece(screen *ebiten.Image, b *board.Board, i, j, mouseX, mouseY int) {
 	drawPieceAt(screen, color, drawX, drawY, isSelected)
 }
 
-//go:noinline
 // drawPieceAt dispatches drawing to specialized functions based on selection state.
+//
+//go:noinline
 func drawPieceAt(screen *ebiten.Image, pieceColor color.Color, x, y float64, isSelected bool) {
 	if pieceColor == nil {
 		return // Don't draw empty cells
@@ -119,8 +122,9 @@ func drawPieceAt(screen *ebiten.Image, pieceColor color.Color, x, y float64, isS
 	}
 }
 
-//go:noinline
 // drawRegularPiece draws a standard square piece.
+//
+//go:noinline
 func drawRegularPiece(screen *ebiten.Image, pieceColor color.Color, x, y float64) {
 	accentColor, ok := config.AccentColors[pieceColor]
 	if !ok {
@@ -141,8 +145,9 @@ func drawRegularPiece(screen *ebiten.Image, pieceColor color.Color, x, y float64
 	screen.DrawImage(accentSquare, accentOp)
 }
 
-//go:noinline
 // drawSelectedPiece draws a circular selected piece.
+//
+//go:noinline
 func drawSelectedPiece(screen *ebiten.Image, pieceColor color.Color, x, y float64) {
 	accentColor, ok := config.AccentColors[pieceColor]
 	if !ok {
@@ -161,11 +166,16 @@ func drawSelectedPiece(screen *ebiten.Image, pieceColor color.Color, x, y float6
 
 //go:noinline
 func drawUI(screen *ebiten.Image, score int, moveCount int) {
-	// Draw move counter
-	moveCountStr := fmt.Sprintf("Moves: %d", moveCount)
-	text.Draw(screen, moveCountStr, config.MTextFace, 10, config.ScreenHeight-10, color.Black)
+	uiTopMargin := 40
+	uiSideMargin := 20
 
-	// Draw score
+	// Draw move counter on the top left
+	moveCountStr := fmt.Sprintf("Moves: %d", moveCount)
+	text.Draw(screen, moveCountStr, config.MTextFace, uiSideMargin, uiTopMargin, color.Black)
+
+	// Draw score on the top right
 	scoreStr := fmt.Sprintf("Score: %d", score)
-	text.Draw(screen, scoreStr, config.MTextFace, 10, config.ScreenHeight-40, color.Black)
+	scoreBounds := text.BoundString(config.MTextFace, scoreStr)
+	scoreX := config.ScreenWidth - scoreBounds.Dx() - uiSideMargin
+	text.Draw(screen, scoreStr, config.MTextFace, scoreX, uiTopMargin, color.Black)
 }
