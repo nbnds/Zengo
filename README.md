@@ -32,7 +32,7 @@ The diagram at the top tracks your path to the solution.
 *   **Strategic Depth**: The tile distribution display allows for forward planning.
 *   **Mobile-Friendly Layout**: The aspect ratio is optimized for a future port to smartphones.
 *   **Minimalist Design**: A clean and distraction-free gaming experience.
-*   **Challenge your friends**: You can click on the sharing code at the bottom to copy it and Ctrl-V to paste it in your game. This way you can challenge your friends to try to achieve a better result (complete the puzzle in fewer moves). You can use this feature to challenge yourself as well trying to  get a better result for a particular configuration.
+*   **Challenge your friends**: You can click on the sharing code at the bottom to copy it and Ctrl-V to paste it in your game. This way you can challenge your friends to try to achieve a better result (complete the puzzle in fewer moves). You can also use this feature to challenge yourself to  get a better result for a particular configuration.
 
 ## How to Build
 
