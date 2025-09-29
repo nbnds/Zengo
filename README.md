@@ -37,10 +37,10 @@ You need the Go programming language to compile the game.
 
 ### Windows
 
-In the project's root directory, run the following command to create a `Zengo.exe` (without a console window):
+In a **PowerShell** terminal in the project's root directory, run the following command. It will build the executable, add it to a zip archive, and then remove the original `.exe`:
 
-```bash
-go build -ldflags="-H windowsgui" -o Zengo.exe .
+```powershell
+go build -ldflags="-H windowsgui" -o Zengo.exe .; Compress-Archive -Path 'Zengo.exe' -DestinationPath 'Zengo.zip' -Force; Remove-Item -Path 'Zengo.exe'
 ```
 
 ## Technology
