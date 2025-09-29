@@ -30,6 +30,7 @@ The progress bar shows you how close you are to the theoretically maximum possib
 *   **Strategic Depth**: The tile distribution display allows for forward planning.
 *   **Mobile-Friendly Layout**: The aspect ratio is optimized for a future port to smartphones.
 *   **Minimalist Design**: A clean and distraction-free gaming experience.
+*   **Sharing**: You can click on the sharing code at the bottom to copy it and Ctrl-V to paste it in your game. This way you can play the same configuration with your friends and compare the results. You can use this feature to challenge yourself as well at getting a better result for a particular configuration.
 
 ## How to Build
 
