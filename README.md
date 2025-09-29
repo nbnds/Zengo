@@ -7,6 +7,8 @@
 
 `Zengo` is a minimalist and relaxing puzzle game about arranging colored tiles into solid groups. Find the optimal arrangement to achieve the maximum score and fill the progress bar. Each game is procedurally generated, offering a new, unique challenge.
 
+The game idea was inspired by the meditative stash sorting experience in the `Escape from Tarkov` game.
+
 ## How to Play
 
 *   **Goal**: Bring all tiles of the same color together into a single, contiguous group.
@@ -15,14 +17,14 @@
 
 ## Scoring
 
-Your goal is to fill the progress bar to 100%. You achieve this by forming the optimal shape for each color.
+Your goal is to to reach the maximum possible points. You achieve this by forming the optimal shape for each color.
 
 *   A group is only scored if **all** tiles of that color on the board form a single, contiguous group.
 *   **Lines**: A group that forms a horizontal or vertical line receives points equal to its length (e.g., 5 tiles in a row = 5 points).
 *   **Rectangles**: A group that forms a solid rectangle (e.g., 2x3) receives a high score according to the formula `Number of tiles * Width * Height` (e.g., 6 tiles in a 2x3 rectangle = 6 * 2 * 3 = 36 points).
 *   Other shapes (e.g., L-shapes or rectangles with holes) score **zero** points.
 
-The progress bar shows you how close you are to the theoretically maximum possible score for the given starting layout.
+The diagram at the top tracks your path to the solution. 
 
 ## Features
 
