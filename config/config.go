@@ -3,6 +3,7 @@ package config
 import (
 	"image"
 	"image/color"
+	"image/draw"
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -134,11 +135,35 @@ func init() {
 	}
 	STextFace = smallFace
 
-	// Create window icons
+	// The initial rainbow icon is set here, but it will be replaced by a tile-specific
+	// icon once the game board is generated.
 	Icons = []image.Image{createRainbowIcon(16), createRainbowIcon(32), createRainbowIcon(48)}
 }
 
-// createRainbowIcon is a helper function to generate the window icon.
+// CreateTileIcons generates a set of window icons based on a single tile's color.
+func CreateTileIcons(tileColor color.Color) []image.Image {
+	sizes := []int{16, 32, 48}
+	icons := make([]image.Image, len(sizes))
+	for i, size := range sizes {
+		// Create a new RGBA image. This is a standard Go image type.
+		img := image.NewRGBA(image.Rect(0, 0, size, size))
+		// Use the standard library's draw package to fill the image with the tile color.
+		draw.Draw(img, img.Bounds(), &image.Uniform{C: tileColor}, image.Point{}, draw.Src)
+
+		// Draw the accent color on top
+		accentColor, ok := AccentColors[tileColor]
+		if !ok {
+			accentColor = White // Default accent
+		}
+		accentRect := image.Rect(size/8, size/8, size/8+size/4, size/8+size/4)
+		draw.Draw(img, accentRect, &image.Uniform{C: accentColor}, image.Point{}, draw.Src)
+
+		icons[i] = img
+	}
+	return icons
+}
+
+// createRainbowIcon is a helper function to generate the initial fallback window icon.
 func createRainbowIcon(size int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, size, size))
 	for y := 0; y < size; y++ {

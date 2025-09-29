@@ -1,6 +1,7 @@
 package game
 
 import (
+	"math/rand"
 	"zenmojo/audio"
 	"zenmojo/board"
 	"zenmojo/config"
@@ -35,6 +36,13 @@ func NewGame(audioManager *audio.Manager) *Game {
 		scoreHistory: []int{scoring.CalculateScore(b.Grid(), scoring.StandardRuleSet{})},
 		audioManager: audioManager,
 	}
+
+	// --- Set a dynamic window icon based on a random tile from the new board ---
+	randomRow := rand.Intn(config.GridSize)
+	randomCol := rand.Intn(config.GridSize)
+	iconColor := b.Grid()[randomRow][randomCol]
+	ebiten.SetWindowIcon(config.CreateTileIcons(iconColor))
+
 	return g
 }
 
