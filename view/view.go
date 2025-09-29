@@ -21,6 +21,7 @@ func Draw(screen *ebiten.Image, b *board.Board, score, maxScore, moveCount int, 
 	drawBoard(screen, b, mouseX, mouseY)
 	drawUI(screen, score, maxScore, moveCount, scoreHistory)
 	drawStoneDistribution(screen, colorCounts)
+	// Note: DrawSharingUI is now called from Game.Draw to be on top of everything.
 }
 
 //go:noinline
@@ -356,4 +357,53 @@ func drawStoneDistribution(screen *ebiten.Image, counts map[color.Color]int) {
 
 		text.Draw(screen, countStr, config.MTextFace, textX, textY, config.Black)
 	}
+}
+
+var (
+	shareCodeBoundsX int
+	shareCodeBoundsY int
+	shareCodeBoundsW int
+	shareCodeBoundsH int
+)
+
+// DrawSharingUI renders the share code and copy feedback.
+func DrawSharingUI(screen *ebiten.Image, code, feedback string, isCustom bool) {
+	// --- Positioning ---
+	y := config.ScreenHeight - 15 // Position near the bottom, moved down for more spacing
+	textColor := config.Black
+
+	// If it's a custom board, use a different color to indicate it.
+	if isCustom {
+		textColor = config.Blue
+	}
+
+	// --- Draw Feedback or Code ---
+	var displayStr string
+	if feedback != "" {
+		displayStr = feedback
+		textColor = config.Green // Use green for positive feedback
+	} else {
+		displayStr = fmt.Sprintf("Share Code: %s", code)
+	}
+
+	// Calculate text dimensions to center it
+	bounds, _ := font.BoundString(config.XSTextFace, displayStr)
+	textW := (bounds.Max.X - bounds.Min.X).Ceil()
+	textH := (bounds.Max.Y - bounds.Min.Y).Ceil()
+	x := (config.ScreenWidth - textW) / 2
+
+	// Store the bounding box of the share code for click detection
+	if feedback == "" {
+		shareCodeBoundsX = x
+		shareCodeBoundsY = y - textH
+		shareCodeBoundsW = textW
+		shareCodeBoundsH = textH + 5 // A little extra height for easier clicking
+	}
+
+	text.Draw(screen, displayStr, config.XSTextFace, x, y, textColor)
+}
+
+// IsShareCodeClicked checks if the mouse click is within the share code's bounding box.
+func IsShareCodeClicked(mx, my int, code string) bool {
+	return code != "" && mx >= shareCodeBoundsX && mx < shareCodeBoundsX+shareCodeBoundsW && my >= shareCodeBoundsY && my < shareCodeBoundsY+shareCodeBoundsH
 }

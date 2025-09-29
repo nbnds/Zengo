@@ -99,6 +99,15 @@ func New() *Board {
 	return b
 }
 
+// NewFromGrid creates a new board from a pre-existing grid.
+func NewFromGrid(grid [][]color.Color) *Board {
+	return &Board{
+		grid:      grid,
+		selectedX: -1,
+		selectedY: -1,
+	}
+}
+
 // Grid returns the current grid state for drawing.
 func (b *Board) Grid() [][]color.Color {
 	return b.grid

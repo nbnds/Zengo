@@ -90,8 +90,9 @@ var (
 
 	HatchingPattern *ebiten.Image
 
-	MTextFace font.Face
-	STextFace font.Face // Smaller font for UI annotations
+	MTextFace  font.Face
+	STextFace  font.Face // Small font for UI annotations
+	XSTextFace font.Face // Extra-small font for less prominent text like the share code
 
 	Icons []image.Image
 )
@@ -134,6 +135,16 @@ func init() {
 		log.Fatal(err)
 	}
 	STextFace = smallFace
+
+	xsmallFace, err := opentype.NewFace(ttf, &opentype.FaceOptions{
+		Size:    12, // Extra-small font size
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	XSTextFace = xsmallFace
 
 	// The initial rainbow icon is set here, but it will be replaced by a tile-specific
 	// icon once the game board is generated.
