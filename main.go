@@ -24,7 +24,11 @@ func main() {
 
 	// Set window properties from the config package
 	ebiten.SetWindowIcon(config.Icons)
-	ebiten.SetWindowSize(config.ScreenWidth, config.ScreenHeight)
+	// Adjust window size for the device's scale factor to prevent blurriness and clipping.
+	// This makes the game DPI-aware.
+	scale := ebiten.Monitor().DeviceScaleFactor()
+	ebiten.SetWindowSize(int(float64(config.ScreenWidth)/scale), int(float64(config.ScreenHeight)/scale))
+
 	ebiten.SetWindowTitle("Zengo")
 
 	// Create a new audio manager
