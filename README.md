@@ -43,7 +43,17 @@ You need the Go programming language to compile the game.
 In a **PowerShell** terminal in the project's root directory, run the following command. It will build the executable, add it to a zip archive, and then remove the original `.exe`:
 
 ```powershell
-go build -ldflags="-H windowsgui" -o Zengo.exe .; Compress-Archive -Path 'Zengo.exe' -DestinationPath 'Zengo.zip' -Force; Remove-Item -Path 'Zengo.exe'
+go build -ldflags="-H windowsgui" -o Zengo.exe .; 
+Compress-Archive -Path 'Zengo.exe' -DestinationPath 'Zengo.zip' -Force; Remove-Item -Path 'Zengo.exe'
+```
+### Creating Custom Icon
+
+```powershell
+go install github.com/akavel/rsrc@latest
+
+rsrc -ico assets/icon.ico -o rsrc.syso
+
+go build -ldflags="-H windowsgui" -o Zengo.exe .
 ```
 
 ## Technology
