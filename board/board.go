@@ -2,7 +2,6 @@ package board
 
 import (
 	"image/color"
-	"math/rand"
 	"zenmojo/config"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -27,74 +26,19 @@ func New() *Board {
 	b := &Board{
 		selectedX: -1,
 		selectedY: -1,
-		grid:      make([][]color.Color, config.GridSize),
 	}
 
-	// --- New distribution logic for varied group sizes ---
 	totalTiles := config.GridSize * config.GridSize
-	minGroupSize := 2
-	maxGroupSize := 10
 
-	colors := make([]color.Color, 0, totalTiles)
-	remainingTiles := totalTiles
+	// Generate the board in three steps:
+	// 1. Calculate the sizes of all color groups
+	groupSizes := generateGroupSizes(totalTiles)
 
-	// Create a temporary, mutable copy of the palette to ensure each color is used at most once.
-	availableColors := make([]color.Color, len(config.Palette))
-	copy(availableColors, config.Palette)
-	rand.Shuffle(len(availableColors), func(i, j int) {
-		availableColors[i], availableColors[j] = availableColors[j], availableColors[i]
-	})
+	// 2. Assign colors to these groups and shuffle them
+	colors := assignColorsToGroups(groupSizes)
 
-	// Create groups of random sizes
-	for remainingTiles > 0 {
-		// Determine a random size for the next group
-		size := rand.Intn(maxGroupSize-minGroupSize+1) + minGroupSize
-
-		// If we've run out of unique colors, stop creating new groups.
-		// The last group will take all remaining tiles.
-		// Ensure the last group doesn't leave a single tile
-		if remainingTiles-size == 1 {
-			size = remainingTiles / 2 // Split the remainder
-		}
-		if remainingTiles-size < 0 {
-			size = remainingTiles // Last group takes all remaining tiles
-		}
-		if len(availableColors) == 0 {
-			// If we are out of colors, distribute the rest among the last color,
-			// but respect maxGroupSize.
-			if remainingTiles > maxGroupSize {
-				size = maxGroupSize
-			} else {
-				size = remainingTiles
-			}
-		}
-
-		// Assign a unique color to this group and remove it from the available pool.
-		// If no unique colors are left, reuse the last available color for the final group.
-		groupColor := availableColors[0]
-		if len(availableColors) > 1 {
-			availableColors = availableColors[1:]
-		}
-		for i := 0; i < size; i++ {
-			colors = append(colors, groupColor)
-		}
-
-		remainingTiles -= size
-	}
-
-	// Shuffle the colors to create a random board.
-	// This ensures that the generated groups are scattered across the grid.
-	rand.Shuffle(len(colors), func(i, j int) {
-		colors[i], colors[j] = colors[j], colors[i]
-	})
-
-	// Populate the grid with the shuffled colors.
-	for i := 0; i < config.GridSize; i++ {
-		b.grid[i] = make([]color.Color, config.GridSize)
-		for j := 0; j < config.GridSize; j++ {
-			b.grid[i][j] = colors[i*config.GridSize+j]
-		}
-	}
+	// 3. Create the final grid from the color array
+	b.grid = createColorGrid(colors)
 
 	return b
 }
