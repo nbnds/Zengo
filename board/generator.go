@@ -6,85 +6,89 @@ import (
 	"zenmojo/config"
 )
 
+// Target distribution for group sizes
+type sizeConstraint struct {
+	size     int
+	minCount int
+	maxCount int
+}
+
 // generateGroupSizes calculates the sizes of color groups that will be placed on the board.
 // It ensures that no single-stone groups are created and that group sizes are between
-// minGroupSize and maxGroupSize.
+// minGroupSize and maxGroupSize, while targeting a specific distribution.
 func generateGroupSizes(totalTiles int) []int {
-	minGroupSize := 2
-	maxGroupSize := 10
-	remainingTiles := totalTiles
-	var groupSizes []int
-
-	// First pass: Create groups with size distribution, aiming for average group size
-	for remainingTiles >= minGroupSize {
-		// Calculate ideal average group size remaining
-		avgSize := float64(remainingTiles) / float64((remainingTiles+maxGroupSize-1)/maxGroupSize)
-		targetSize := int(avgSize)
-		if targetSize < minGroupSize {
-			targetSize = minGroupSize
-		}
-		if targetSize > maxGroupSize {
-			targetSize = maxGroupSize
-		}
-
-		// Add some randomization around the target size
-		variance := (maxGroupSize - minGroupSize) / 4
-		if variance < 1 {
-			variance = 1
-		}
-
-		size := targetSize + rand.Intn(variance*2+1) - variance
-		if size < minGroupSize {
-			size = minGroupSize
-		}
-		if size > maxGroupSize {
-			size = maxGroupSize
-		}
-
-		// Ensure we leave enough tiles for at least one more group if tiles remain
-		tilesAfterGroup := remainingTiles - size
-		if tilesAfterGroup > 0 && tilesAfterGroup < minGroupSize {
-			// If we can't make another group, add remaining tiles to current group
-			if size+tilesAfterGroup <= maxGroupSize {
-				size += tilesAfterGroup
-			} else {
-				// Otherwise make this group smaller to allow another valid group
-				size = remainingTiles / 2
-			}
-		}
-
-		groupSizes = append(groupSizes, size)
-		remainingTiles -= size
+	// Define target distribution
+	targetDist := []sizeConstraint{
+		{size: 10, minCount: 0, maxCount: 2}, // 0-2 large groups
+		{size: 9, minCount: 1, maxCount: 3},  // 1-3 groups
+		{size: 8, minCount: 1, maxCount: 4},  // 1-4 groups
+		{size: 7, minCount: 1, maxCount: 3},  // 1-3 groups
+		{size: 6, minCount: 2, maxCount: 4},  // 2-4 groups
+		{size: 5, minCount: 2, maxCount: 4},  // 2-4 groups
+		{size: 4, minCount: 2, maxCount: 5},  // 2-5 groups
+		{size: 3, minCount: 2, maxCount: 4},  // 2-4 groups
+		{size: 2, minCount: 1, maxCount: 4},  // 1-4 groups
 	}
 
-	// Second pass: If we have leftover tiles, distribute them evenly
-	if remainingTiles > 0 {
-		// Sort group sizes ascending for even distribution
-		indices := make([]int, len(groupSizes))
-		for i := range indices {
-			indices[i] = i
+	var groupSizes []int
+	remainingTiles := totalTiles
+
+	minGroupSize := 2
+	maxGroupSize := 10
+
+	// First pass: ensure minimum counts for each size
+	for _, sc := range targetDist {
+		count := sc.minCount
+		for i := 0; i < count && remainingTiles >= sc.size; i++ {
+			groupSizes = append(groupSizes, sc.size)
+			remainingTiles -= sc.size
 		}
-		for i := 0; i < len(indices)-1; i++ {
-			for j := i + 1; j < len(indices); j++ {
-				if groupSizes[indices[i]] > groupSizes[indices[j]] {
-					indices[i], indices[j] = indices[j], indices[i]
+	}
+
+	// Second pass: add additional groups within constraints
+	for remainingTiles >= minGroupSize {
+		// Try each size in random order
+		indices := rand.Perm(len(targetDist))
+		added := false
+
+		for _, idx := range indices {
+			sc := targetDist[idx]
+			currentCount := 0
+			for _, size := range groupSizes {
+				if size == sc.size {
+					currentCount++
 				}
+			}
+
+			if currentCount < sc.maxCount && remainingTiles >= sc.size {
+				groupSizes = append(groupSizes, sc.size)
+				remainingTiles -= sc.size
+				added = true
+				break
 			}
 		}
 
-		// Distribute remaining tiles to smaller groups first
-		for i := 0; remainingTiles > 0 && i < len(groupSizes); i++ {
-			idx := indices[i]
-			if groupSizes[idx] < maxGroupSize {
-				add := 1 // Add only one tile at a time for more even distribution
-				if add > remainingTiles {
-					add = remainingTiles
-				}
-				if groupSizes[idx]+add <= maxGroupSize {
-					groupSizes[idx] += add
-					remainingTiles -= add
+		// If we couldn't add any size within constraints, add smallest possible
+		if !added {
+			size := minGroupSize
+			for s := minGroupSize + 1; s <= maxGroupSize; s++ {
+				if s <= remainingTiles {
+					count := 0
+					for _, gs := range groupSizes {
+						if gs == s {
+							count++
+						}
+					}
+					for _, sc := range targetDist {
+						if sc.size == s && count < sc.maxCount {
+							size = s
+							break
+						}
+					}
 				}
 			}
+			groupSizes = append(groupSizes, size)
+			remainingTiles -= size
 		}
 	}
 
@@ -94,35 +98,71 @@ func generateGroupSizes(totalTiles int) []int {
 		totalSize += size
 	}
 
-	// If we have too many tiles, reduce the largest groups
+	// If we have too many tiles, reduce the largest groups while respecting constraints
 	for totalSize > totalTiles {
-		// Find largest group
-		maxIdx := 0
-		for i := 1; i < len(groupSizes); i++ {
-			if groupSizes[i] > groupSizes[maxIdx] {
-				maxIdx = i
+		// Find largest group that can be reduced
+		maxIdx := -1
+		for i := 0; i < len(groupSizes); i++ {
+			size := groupSizes[i]
+			if size > minGroupSize {
+				// Check if reducing this group still meets minimum count
+				for _, sc := range targetDist {
+					if sc.size == size {
+						count := 0
+						for _, gs := range groupSizes {
+							if gs == size {
+								count++
+							}
+						}
+						if count > sc.minCount {
+							if maxIdx == -1 || groupSizes[i] > groupSizes[maxIdx] {
+								maxIdx = i
+							}
+						}
+						break
+					}
+				}
 			}
 		}
-		if groupSizes[maxIdx] > minGroupSize {
+		if maxIdx != -1 {
 			groupSizes[maxIdx]--
 			totalSize--
+		} else {
+			break // Can't reduce any more while respecting constraints
 		}
 	}
 
-	// If we have too few tiles, add to smaller groups
+	// If we have too few tiles, add to smaller groups while respecting constraints
 	for totalSize < totalTiles {
-		// Find smallest group that can grow
+		// Find smallest group that can grow within constraints
 		minIdx := -1
 		for i := 0; i < len(groupSizes); i++ {
-			if groupSizes[i] < maxGroupSize {
-				if minIdx == -1 || groupSizes[i] < groupSizes[minIdx] {
-					minIdx = i
+			size := groupSizes[i]
+			if size < maxGroupSize {
+				// Check if growing this group still meets maximum count
+				for _, sc := range targetDist {
+					if sc.size == size+1 {
+						count := 0
+						for _, gs := range groupSizes {
+							if gs == size+1 {
+								count++
+							}
+						}
+						if count < sc.maxCount {
+							if minIdx == -1 || groupSizes[i] < groupSizes[minIdx] {
+								minIdx = i
+							}
+						}
+						break
+					}
 				}
 			}
 		}
 		if minIdx != -1 {
 			groupSizes[minIdx]++
 			totalSize++
+		} else {
+			break // Can't grow any more while respecting constraints
 		}
 	}
 
