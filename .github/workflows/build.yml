@@ -1,0 +1,153 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ "master" ]
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  VERSION: ${GITHUB_REF_NAME#v}
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [amd64, 386]
+        include:
+          - arch: amd64
+            name: x64
+          - arch: 386
+            name: x86
+            
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, 386]
+        include:
+          - arch: amd64
+            name: x64
+          - arch: 386
+            name: x86
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+        
+    - name: Install dependencies
+      run: go mod download
+        
+    - name: Build
+      env:
+        GOARCH: ${{ matrix.arch }}
+        GOOS: windows
+      run: |
+        # Build with rsrc.syso to include the icon
+        cp .build/rsrc.syso .
+        go build -v -o Zengo-${{ matrix.name }}.exe
+        rm rsrc.syso
+      
+    - name: Prepare release package
+      run: |
+        mkdir "release-${{ matrix.name }}"
+        move "Zengo-${{ matrix.name }}.exe" "release-${{ matrix.name }}/Zengo.exe"
+        xcopy /E /I assets "release-${{ matrix.name }}\assets"
+        # Clean up build artifacts that shouldn't be in the release
+        if (Test-Path "release-${{ matrix.name }}/rsrc.syso") { Remove-Item "release-${{ matrix.name }}/rsrc.syso" }
+      
+    - name: Create ZIP archive
+      run: Compress-Archive -Path "release-${{ matrix.name }}/*" -DestinationPath "Zengo-windows-${{ matrix.name }}.zip"
+        
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Zengo-Windows-${{ matrix.name }}
+        path: Zengo-windows-${{ matrix.name }}.zip
+
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, 386]
+        include:
+          - arch: amd64
+            name: x64
+          - arch: 386
+            name: x86
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+        
+    - name: Install dependencies
+      run: go mod download
+        
+    - name: Build
+      env:
+        GOARCH: ${{ matrix.arch }}
+        GOOS: linux
+      run: |
+        # Build without rsrc.syso for Linux
+        go build -v -o Zengo-${{ matrix.name }}
+      
+    - name: Prepare release package
+      run: |
+        mkdir -p "release-${{ matrix.name }}/usr/local/bin"
+        mkdir -p "release-${{ matrix.name }}/usr/local/share/applications"
+        mkdir -p "release-${{ matrix.name }}/usr/local/share/icons/hicolor/256x256/apps"
+        mkdir -p "release-${{ matrix.name }}/usr/local/share/zengo"
+        
+        # Copy executable
+        mv "Zengo-${{ matrix.name }}" "release-${{ matrix.name }}/usr/local/bin/Zengo"
+        chmod +x "release-${{ matrix.name }}/usr/local/bin/Zengo"
+        
+        # Copy assets
+        cp -r assets "release-${{ matrix.name }}/usr/local/share/zengo/"
+        
+        # Copy icon and desktop entry
+        cp .build/assets/Icon.png "release-${{ matrix.name }}/usr/local/share/icons/hicolor/256x256/apps/zengo.png"
+        cp .build/Zengo.desktop "release-${{ matrix.name }}/usr/local/share/applications/"
+      
+    - name: Create tarball
+      run: |
+        cd "release-${{ matrix.name }}"
+        tar czf "../Zengo-linux-${{ matrix.name }}.tar.gz" .
+      
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Zengo-Linux-${{ matrix.name }}
+        path: Zengo-linux-${{ matrix.name }}.tar.gz
+
+  create-release:
+    needs: [build-windows, build-linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: Zengo ${{ env.VERSION }}
+        draft: false
+        prerelease: false
+        files: |
+          Zengo-Windows-x64/Zengo-windows-x64.zip
+          Zengo-Windows-x86/Zengo-windows-x86.zip
+          Zengo-Linux-x64/Zengo-linux-x64.tar.gz
+          Zengo-Linux-x86/Zengo-linux-x86.tar.gz

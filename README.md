@@ -34,27 +34,58 @@ The diagram at the top tracks your path to the solution.
 *   **Minimalist Design**: A clean and distraction-free gaming experience.
 *   **Challenge your friends**: You can click on the sharing code at the bottom to copy it and Ctrl-V to paste it in your game. This way you can challenge your friends to try to achieve a better result (complete the puzzle in fewer moves). You can also use this feature to challenge yourself to  get a better result for a particular configuration.
 
-## How to Build
+## Development
+
+### Project Structure
+
+The project uses a clear separation between runtime and build assets:
+- `/assets`: Contains runtime assets (e.g., sound effects)
+- `/.build`: Contains build-specific files (icons, desktop entries)
+
+### Building Locally
 
 You need the Go programming language to compile the game.
 
-### Windows
+#### Windows
 
-In a **PowerShell** terminal in the project's root directory, run the following command. It will build the executable, add it to a zip archive, and then remove the original `.exe`:
+In a **PowerShell** terminal in the project's root directory:
 
 ```powershell
-go build -ldflags="-H windowsgui" -o Zengo.exe .; 
-Compress-Archive -Path 'Zengo.exe' -DestinationPath 'Zengo.zip' -Force; Remove-Item -Path 'Zengo.exe'
+go build -ldflags="-H windowsgui" -o Zengo.exe
 ```
-### Creating Custom Icon
+
+#### Creating Custom Icon
 
 ```powershell
 go install github.com/akavel/rsrc@latest
-
-rsrc -ico assets/icon.ico -o rsrc.syso
-
-go build -ldflags="-H windowsgui" -o Zengo.exe .
+rsrc -ico .build/assets/icon.ico -o .build/rsrc.syso
+go build -ldflags="-H windowsgui" -o Zengo.exe
 ```
+
+### Release Process
+
+The project uses Semantic Versioning (MAJOR.MINOR.PATCH):
+- MAJOR (0.x.x): Breaking changes
+- MINOR (x.2.x): New features
+- PATCH (x.x.1): Bugfixes
+
+To create a new release:
+
+1. Decide on the version number based on your changes
+2. Create and push a new tag:
+   ```powershell
+   # For a bugfix
+   git tag -a v0.1.1 -m "Bugfix: Fixed group size calculation"
+   git push origin v0.1.1
+
+   # For a new feature
+   git tag -a v0.2.0 -m "Feature: Added new game mode"
+   git push origin v0.2.0
+   ```
+3. GitHub Actions will automatically:
+   - Build Windows (x86/x64) and Linux (x86/x64) versions
+   - Create a GitHub Release with the version number
+   - Upload all build artifacts
 
 ## Technology
 

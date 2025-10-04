@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Zengo
+Comment=A minimalist and relaxing puzzle game about arranging colored tiles
+Exec=Zengo
+Icon=zengo
+Terminal=false
+Type=Application
+Categories=Game;LogicGame;
+Keywords=puzzle;tiles;zen;
