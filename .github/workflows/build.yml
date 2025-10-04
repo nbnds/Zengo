@@ -55,16 +55,18 @@ jobs:
       contents: write
     
     steps:
-      - name: Download all artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
+        with:
+          path: artifacts
         
       - name: Display structure of downloaded files
-        run: ls -R
+        run: ls -R artifacts
 
       - name: Package executables into zip files
         run: |
-          zip -j Zengo-x64.zip Zengo-Windows-x64/Zengo-x64.exe
-          zip -j Zengo-x86.zip Zengo-Windows-x86/Zengo-x86.exe
+          zip -j Zengo-x64.zip artifacts/Zengo-Windows-x64/Zengo-x64.exe
+          zip -j Zengo-x86.zip artifacts/Zengo-Windows-x86/Zengo-x86.exe
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
