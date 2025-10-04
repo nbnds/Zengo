@@ -10,6 +10,10 @@ func TestGenerateGroupSizes(t *testing.T) {
 	totalTiles := config.GridSize * config.GridSize
 	numTrials := 100
 
+	// Sammle Statistiken über mehrere Durchläufe
+	sizeFrequency := make(map[int]int)
+	var allSizes []int
+
 	for trial := 0; trial < numTrials; trial++ {
 		sizes := generateGroupSizes(totalTiles)
 
@@ -17,6 +21,8 @@ func TestGenerateGroupSizes(t *testing.T) {
 		sum := 0
 		for _, size := range sizes {
 			sum += size
+			sizeFrequency[size]++
+			allSizes = append(allSizes, size)
 		}
 		if sum != totalTiles {
 			t.Errorf("Trial %d: Sum of group sizes %d does not match total tiles %d", trial, sum, totalTiles)
@@ -30,6 +36,34 @@ func TestGenerateGroupSizes(t *testing.T) {
 			if size > 10 {
 				t.Errorf("Trial %d: Group %d has invalid size %d (larger than 10)", trial, i, size)
 			}
+		}
+
+		// Test 3: Nicht alle Gruppen dürfen die gleiche Größe haben
+		if len(sizes) > 1 {
+			allSame := true
+			firstSize := sizes[0]
+			for _, size := range sizes[1:] {
+				if size != firstSize {
+					allSame = false
+					break
+				}
+			}
+			if allSame {
+				t.Errorf("Trial %d: All groups have the same size %d", trial, firstSize)
+			}
+		}
+	}
+
+	// Test 4: Überprüfe die Verteilung der Gruppengrößen
+	t.Logf("Group size distribution over %d trials:", numTrials)
+	for size := 2; size <= 10; size++ {
+		frequency := sizeFrequency[size]
+		percentage := float64(frequency) * 100 / float64(len(allSizes))
+		t.Logf("Size %d: %d times (%.2f%%)", size, frequency, percentage)
+
+		// Keine Größe sollte mehr als 50% aller Gruppen ausmachen
+		if percentage > 50 {
+			t.Errorf("Size %d appears too frequently: %.2f%% of all groups", size, percentage)
 		}
 	}
 }

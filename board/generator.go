@@ -15,77 +15,114 @@ func generateGroupSizes(totalTiles int) []int {
 	remainingTiles := totalTiles
 	var groupSizes []int
 
-	// Verteile die Steine in Gruppen
-	for remainingTiles > 0 {
-		// Berechne die minimale Anzahl weiterer Gruppen, die wir noch brauchen
-		minRemainingGroups := (remainingTiles + maxGroupSize - 1) / maxGroupSize
-		if minRemainingGroups < remainingTiles/maxGroupSize {
-			minRemainingGroups++
+	// First pass: Create groups with size distribution, aiming for average group size
+	for remainingTiles >= minGroupSize {
+		// Calculate ideal average group size remaining
+		avgSize := float64(remainingTiles) / float64((remainingTiles+maxGroupSize-1)/maxGroupSize)
+		targetSize := int(avgSize)
+		if targetSize < minGroupSize {
+			targetSize = minGroupSize
+		}
+		if targetSize > maxGroupSize {
+			targetSize = maxGroupSize
 		}
 
-		// Berechne die Größe für diese Gruppe
-		size := maxGroupSize
-		if remainingTiles < maxGroupSize {
-			size = remainingTiles
+		// Add some randomization around the target size
+		variance := (maxGroupSize - minGroupSize) / 4
+		if variance < 1 {
+			variance = 1
 		}
 
-		// Wenn die verbleibenden Steine zu wenige für eine neue Gruppe sind,
-		// verteile sie auf existierende Gruppen
-		if remainingTiles-size < minGroupSize && remainingTiles-size > 0 {
-			extraStones := remainingTiles - size
+		size := targetSize + rand.Intn(variance*2+1) - variance
+		if size < minGroupSize {
+			size = minGroupSize
+		}
+		if size > maxGroupSize {
+			size = maxGroupSize
+		}
 
-			// Versuche die extra Steine auf vorhandene Gruppen zu verteilen
-			for i := len(groupSizes) - 1; i >= 0 && extraStones > 0; i-- {
-				spaceLeft := maxGroupSize - groupSizes[i]
-				if spaceLeft > 0 {
-					add := extraStones
-					if add > spaceLeft {
-						add = spaceLeft
-					}
-					groupSizes[i] += add
-					extraStones -= add
-				}
-			}
-
-			// Wenn noch Steine übrig sind, füge sie zur aktuellen Gruppe hinzu
-			if extraStones > 0 {
-				size += extraStones
+		// Ensure we leave enough tiles for at least one more group if tiles remain
+		tilesAfterGroup := remainingTiles - size
+		if tilesAfterGroup > 0 && tilesAfterGroup < minGroupSize {
+			// If we can't make another group, add remaining tiles to current group
+			if size+tilesAfterGroup <= maxGroupSize {
+				size += tilesAfterGroup
+			} else {
+				// Otherwise make this group smaller to allow another valid group
+				size = remainingTiles / 2
 			}
 		}
 
-		// Füge die neue Gruppe hinzu
-		if size >= minGroupSize {
-			groupSizes = append(groupSizes, size)
-			remainingTiles -= size
-		} else {
-			// Wenn die Gruppe zu klein wäre, verteile die Steine auf vorhandene Gruppen
-			stonesLeft := size
-			for i := len(groupSizes) - 1; i >= 0 && stonesLeft > 0; i-- {
-				spaceLeft := maxGroupSize - groupSizes[i]
-				if spaceLeft > 0 {
-					add := stonesLeft
-					if add > spaceLeft {
-						add = spaceLeft
-					}
-					groupSizes[i] += add
-					stonesLeft -= add
+		groupSizes = append(groupSizes, size)
+		remainingTiles -= size
+	}
+
+	// Second pass: If we have leftover tiles, distribute them evenly
+	if remainingTiles > 0 {
+		// Sort group sizes ascending for even distribution
+		indices := make([]int, len(groupSizes))
+		for i := range indices {
+			indices[i] = i
+		}
+		for i := 0; i < len(indices)-1; i++ {
+			for j := i + 1; j < len(indices); j++ {
+				if groupSizes[indices[i]] > groupSizes[indices[j]] {
+					indices[i], indices[j] = indices[j], indices[i]
 				}
 			}
-			// Wenn wir die Steine nicht verteilen konnten, müssen wir eine neue Gruppe machen
-			if stonesLeft > 0 {
-				// Hole mehr Steine von der letzten Gruppe
-				lastGroupIdx := len(groupSizes) - 1
-				if lastGroupIdx >= 0 {
-					// Nimm genug Steine von der letzten Gruppe, um eine gültige neue Gruppe zu bilden
-					needed := minGroupSize - stonesLeft
-					if groupSizes[lastGroupIdx] > needed+minGroupSize {
-						groupSizes[lastGroupIdx] -= needed
-						stonesLeft += needed
-						groupSizes = append(groupSizes, stonesLeft)
-					}
+		}
+
+		// Distribute remaining tiles to smaller groups first
+		for i := 0; remainingTiles > 0 && i < len(groupSizes); i++ {
+			idx := indices[i]
+			if groupSizes[idx] < maxGroupSize {
+				add := 1 // Add only one tile at a time for more even distribution
+				if add > remainingTiles {
+					add = remainingTiles
+				}
+				if groupSizes[idx]+add <= maxGroupSize {
+					groupSizes[idx] += add
+					remainingTiles -= add
 				}
 			}
-			remainingTiles -= size
+		}
+	}
+
+	// Final validation: Ensure total tiles is exactly what we want
+	totalSize := 0
+	for _, size := range groupSizes {
+		totalSize += size
+	}
+
+	// If we have too many tiles, reduce the largest groups
+	for totalSize > totalTiles {
+		// Find largest group
+		maxIdx := 0
+		for i := 1; i < len(groupSizes); i++ {
+			if groupSizes[i] > groupSizes[maxIdx] {
+				maxIdx = i
+			}
+		}
+		if groupSizes[maxIdx] > minGroupSize {
+			groupSizes[maxIdx]--
+			totalSize--
+		}
+	}
+
+	// If we have too few tiles, add to smaller groups
+	for totalSize < totalTiles {
+		// Find smallest group that can grow
+		minIdx := -1
+		for i := 0; i < len(groupSizes); i++ {
+			if groupSizes[i] < maxGroupSize {
+				if minIdx == -1 || groupSizes[i] < groupSizes[minIdx] {
+					minIdx = i
+				}
+			}
+		}
+		if minIdx != -1 {
+			groupSizes[minIdx]++
+			totalSize++
 		}
 	}
 
