@@ -66,10 +66,10 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R
 
-      - name: Rename files for release
+      - name: Package executables into zip files
         run: |
-          mv Zengo-Windows-x64/Zengo.exe Zengo-x64.exe
-          mv Zengo-Windows-x86/Zengo.exe Zengo-x86.exe
+          zip Zengo-x64.zip Zengo-Windows-x64/Zengo.exe
+          zip Zengo-x86.zip Zengo-Windows-x86/Zengo.exe
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
@@ -78,5 +78,5 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            Zengo-x64.exe
-            Zengo-x86.exe
+            Zengo-x64.zip
+            Zengo-x86.zip
