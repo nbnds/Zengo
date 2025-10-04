@@ -1,6 +1,6 @@
-name: Build an  build-linux:
-    runs-on: ubuntu-latest
-    strategy:n:
+name: Build and Release
+
+on:
   push:
     branches: [ "master" ]
     tags:
