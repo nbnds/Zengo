@@ -15,20 +15,78 @@ func generateGroupSizes(totalTiles int) []int {
 	remainingTiles := totalTiles
 	var groupSizes []int
 
+	// Verteile die Steine in Gruppen
 	for remainingTiles > 0 {
-		// Determine size for the next group
-		size := rand.Intn(maxGroupSize-minGroupSize+1) + minGroupSize
-
-		// Prevent single tile remainders
-		if remainingTiles-size == 1 {
-			size = remainingTiles / 2 // Split the remainder
-		}
-		if remainingTiles-size < 0 {
-			size = remainingTiles // Last group takes all remaining tiles
+		// Berechne die minimale Anzahl weiterer Gruppen, die wir noch brauchen
+		minRemainingGroups := (remainingTiles + maxGroupSize - 1) / maxGroupSize
+		if minRemainingGroups < remainingTiles/maxGroupSize {
+			minRemainingGroups++
 		}
 
-		groupSizes = append(groupSizes, size)
-		remainingTiles -= size
+		// Berechne die Größe für diese Gruppe
+		size := maxGroupSize
+		if remainingTiles < maxGroupSize {
+			size = remainingTiles
+		}
+
+		// Wenn die verbleibenden Steine zu wenige für eine neue Gruppe sind,
+		// verteile sie auf existierende Gruppen
+		if remainingTiles-size < minGroupSize && remainingTiles-size > 0 {
+			extraStones := remainingTiles - size
+
+			// Versuche die extra Steine auf vorhandene Gruppen zu verteilen
+			for i := len(groupSizes) - 1; i >= 0 && extraStones > 0; i-- {
+				spaceLeft := maxGroupSize - groupSizes[i]
+				if spaceLeft > 0 {
+					add := extraStones
+					if add > spaceLeft {
+						add = spaceLeft
+					}
+					groupSizes[i] += add
+					extraStones -= add
+				}
+			}
+
+			// Wenn noch Steine übrig sind, füge sie zur aktuellen Gruppe hinzu
+			if extraStones > 0 {
+				size += extraStones
+			}
+		}
+
+		// Füge die neue Gruppe hinzu
+		if size >= minGroupSize {
+			groupSizes = append(groupSizes, size)
+			remainingTiles -= size
+		} else {
+			// Wenn die Gruppe zu klein wäre, verteile die Steine auf vorhandene Gruppen
+			stonesLeft := size
+			for i := len(groupSizes) - 1; i >= 0 && stonesLeft > 0; i-- {
+				spaceLeft := maxGroupSize - groupSizes[i]
+				if spaceLeft > 0 {
+					add := stonesLeft
+					if add > spaceLeft {
+						add = spaceLeft
+					}
+					groupSizes[i] += add
+					stonesLeft -= add
+				}
+			}
+			// Wenn wir die Steine nicht verteilen konnten, müssen wir eine neue Gruppe machen
+			if stonesLeft > 0 {
+				// Hole mehr Steine von der letzten Gruppe
+				lastGroupIdx := len(groupSizes) - 1
+				if lastGroupIdx >= 0 {
+					// Nimm genug Steine von der letzten Gruppe, um eine gültige neue Gruppe zu bilden
+					needed := minGroupSize - stonesLeft
+					if groupSizes[lastGroupIdx] > needed+minGroupSize {
+						groupSizes[lastGroupIdx] -= needed
+						stonesLeft += needed
+						groupSizes = append(groupSizes, stonesLeft)
+					}
+				}
+			}
+			remainingTiles -= size
+		}
 	}
 
 	return groupSizes
