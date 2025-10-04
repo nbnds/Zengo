@@ -41,25 +41,19 @@ jobs:
         run: |
           # Build with rsrc.syso to include the icon
           cp .build/rsrc.syso .
-          go build -v -o Zengo-${{ matrix.name }}.exe
+          go build -ldflags="-H windowsgui" -v -o Zengo-${{ matrix.name }}.exe
           rm rsrc.syso
         
       - name: Prepare release package
         run: |
           mkdir "release-${{ matrix.name }}"
           move "Zengo-${{ matrix.name }}.exe" "release-${{ matrix.name }}/Zengo.exe"
-          xcopy /E /I assets "release-${{ matrix.name }}\assets"
-          # Clean up build artifacts that shouldn't be in the release
-          if (Test-Path "release-${{ matrix.name }}/rsrc.syso") { Remove-Item "release-${{ matrix.name }}/rsrc.syso" }
         
-      - name: Create ZIP archive
-        run: Compress-Archive -Path "release-${{ matrix.name }}/*" -DestinationPath "Zengo-windows-${{ matrix.name }}.zip"
-          
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Zengo-Windows-${{ matrix.name }}
-          path: Zengo-windows-${{ matrix.name }}.zip
+          path: release-${{ matrix.name }}/Zengo.exe
 
   create-release:
     needs: [build-windows]
@@ -77,5 +71,5 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            Zengo-Windows-x64/Zengo-windows-x64.zip
-            Zengo-Windows-x86/Zengo-windows-x86.zip
+            Zengo-Windows-x64/Zengo.exe
+            Zengo-Windows-x86/Zengo.exe
