@@ -73,5 +73,5 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            Zengo-Windows-x64/Zengo.exe
-            Zengo-Windows-x86/Zengo.exe
+            Zengo-Windows-x64/Zengo.exe > Zengo-x64.exe
+            Zengo-Windows-x86/Zengo.exe > Zengo-x86.exe
