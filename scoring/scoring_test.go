@@ -16,8 +16,8 @@ func TestFindGroups(t *testing.T) {
 	nilColor := color.Color(nil) // Represents an empty cell
 
 	testCases := []struct {
-		name                string
-		grid                [][]color.Color
+		name               string
+		grid               [][]color.Color
 		expectedGroupSizes []int // We check the sizes of the found groups
 	}{
 		{
